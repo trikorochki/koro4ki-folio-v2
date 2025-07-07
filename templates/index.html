@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KORO4KI MUSIC</title>
+    
+    <!-- Шрифты с Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Megrim&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- Правильные пути к статике -->
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+</head>
+<body class="landing-page">
+    <div class="landing-container">
+        <header class="landing-header">
+            <h1>KORO4KI</h1>
+            <p>Two worlds. One universe.</p>
+        </header>
+
+        <main class="artist-selection">
+            <!-- Движок Jinja2 будет рендерить карточки -->
+            {% for slug, artist in artists.items() %}
+            <a href="/artist/{{ slug }}" class="artist-card theme-{{ artist.theme }}">
+                <div class="artist-card-content">
+                    <h2>{{ artist.name }}</h2>
+                    <p>{{ artist.description_line1 }}</p>
+                </div>
+            </a>
+            {% endfor %}
+        </main>
+    </div>
+</body>
+</html>

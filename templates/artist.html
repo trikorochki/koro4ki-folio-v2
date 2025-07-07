@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ artist_name }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Megrim&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Путь теперь указывает на файл внутри папки public -->
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+</head>
+<!-- Остальная часть файла без изменений -->
+<body data-artist-slug="{{ artist_slug }}">
+
+    <nav class="main-nav">
+        <a href="{{ url_for('index') }}" class="nav-home">KORO4KI</a>
+        <div class="artist-links">
+            {% for slug, artist in artists.items() %}
+                <a href="{{ url_for('artist_page', artist_slug=slug) }}" class="{{ 'active' if slug == artist_slug else '' }}">
+                    {{ artist.name }}
+                </a>
+            {% endfor %}
+        </div>
+    </nav>
+
+    <header id="artist-header">
+        <img id="artist-image" src="" alt="Artist photo" class="artist-photo">
+        <div class="artist-info">
+            <h1 id="artist-name-heading"></h1>
+            <p id="artist-description">
+                <span class="line1"></span>
+                <span class="line2"></span>
+            </p>
+            <button id="play-all-button" class="cta-button">Play All</button>
+        </div>
+    </header>
+
+    <main id="album-container">
+        <div class="loader">Loading music...</div>
+    </main>
+
+    <footer>
+        <div class="audio-player">
+            <p id="current-track-title">Select a track to start listening</p>
+            <audio id="audio-element" controls></audio>
+        </div>
+    </footer>
+
+    <script src="/static/js/artist.js"></script>
+
+</body>
+</html>
