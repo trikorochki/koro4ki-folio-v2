@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>kr4 neuromusic production</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Megrim&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="favicon.ico">
+</head>
+<body class="body-with-player">
+    <div class="artist-page-container" id="artist-container">
+        <!-- Информация об артисте -->
+        <header class="artist-header">
+            <img src="" alt="Аватар Артиста" class="artist-avatar" id="artist-avatar">
+            <div class="artist-info">
+                <h1 id="artist-name"></h1>
+                <p id="artist-description-line1"></p>
+                <p id="artist-description-line2"></p>
+                <a href="index.html" class="back-link">&larr; Back to worlds</a>
+            </div>
+        </header>
+
+        <!-- Блок с вкладками -->
+        <div class="tabs-section">
+            <nav class="tab-nav">
+                <button class="tab-btn" data-tab="albums" id="albums-tab-btn">Albums</button>
+                <button class="tab-btn" data-tab="eps" id="eps-tab-btn">EPs</button>
+                <button class="tab-btn" data-tab="demos" id="demos-tab-btn">Demos</button> <!-- Новая кнопка -->
+            </nav>
+            <div class="tab-content">
+                <!-- Панель для альбомов -->
+                <div class="tab-pane" id="albums-pane">
+                    <div class="album-carousel" id="album-carousel-albums"></div>
+                </div>
+                <!-- Панель для EP -->
+                <div class="tab-pane" id="eps-pane">
+                    <div class="album-carousel" id="album-carousel-eps"></div>
+                </div>
+                <!-- Панель для Demos -->
+                <div class="tab-pane" id="demos-pane">
+                    <div class="album-carousel" id="album-carousel-demos"></div> <!-- Новая панель -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Блок для отображения плейлиста -->
+        <main class="playlist-display-section">
+            <h3 id="current-album-title">Select a release</h3>
+            <div id="playlist"></div>
+        </main>
+    </div>
+
+    <!-- Прикрепленный к низу плеер -->
+    <footer class="player-footer">
+        <div id="audio-player">
+            <div class="player-controls">
+                <button id="prev-btn">⏮</button>
+                <button id="play-pause-btn">▶</button>
+                <button id="next-btn">⏭</button>
+            </div>
+            <div class="track-info">
+                <p id="current-track-title">Select a track</p>
+                <input type="range" id="progress-bar" value="0" step="1">
+                <div class="time-display">
+                    <span id="current-time">0:00</span> / <span id="duration">0:00</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <audio id="audio-source"></audio>
+    <script src="playlist-data.js"></script>
+    <script src="artist.js"></script>
+</body>
+</html>
