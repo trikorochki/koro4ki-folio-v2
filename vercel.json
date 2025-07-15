@@ -22,10 +22,6 @@
       "use": "@vercel/static"
     },
     {
-      "src": "music/**",
-      "use": "@vercel/static"
-    },
-    {
       "src": "favicon.ico",
       "use": "@vercel/static"
     }

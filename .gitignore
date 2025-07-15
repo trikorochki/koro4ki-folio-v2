@@ -1,1 +1,5 @@
 .env*.local
+# Python virtual environment
+/venv
+.env
+/music

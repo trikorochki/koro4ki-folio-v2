@@ -3,6 +3,7 @@
 import os
 import mimetypes
 from vercel_blob import put
+from dotenv import load_dotenv
 
 MUSIC_DIR = 'music'
 
@@ -21,21 +22,21 @@ def upload_files_to_blob():
                 continue
             
             local_path = os.path.join(root, filename)
-            
-            # Путь в хранилище будет таким же, как локальный (e.g., music/artist/album/track.mp3)
             blob_path = local_path.replace("\\", "/")
 
             print(f"  Загрузка: {local_path} -> {blob_path}")
 
             try:
                 with open(local_path, 'rb') as f:
-                    # Определяем MIME-тип файла для корректной отдачи
+                    # ✅ ИСПРАВЛЕНИЕ: Читаем содержимое файла в байты
+                    file_content = f.read()
+                    
                     content_type, _ = mimetypes.guess_type(local_path)
                     if content_type is None:
                         content_type = 'application/octet-stream'
 
-                    # Загружаем файл в Blob
-                    blob_result = put(blob_path, f, options={'content_type': content_type})
+                    # ✅ ИСПРАВЛЕНИЕ: Передаем в функцию байты, а не объект файла
+                    blob_result = put(blob_path, file_content, options={'content_type': content_type})
                     print(f"    Успешно! URL: {blob_result['url']}")
 
             except Exception as e:
@@ -44,10 +45,12 @@ def upload_files_to_blob():
     print("--- Загрузка завершена ---")
 
 if __name__ == '__main__':
-    # Убедитесь, что вы выполнили `vercel env pull` для загрузки переменных окружения
+    # ✅ ИСПРАВЛЕНИЕ: Загружаем переменные из .env файла перед использованием
+    print("Загрузка переменных окружения из .env.development.local...")
+    load_dotenv('.env.development.local')
+    
     if not os.environ.get('BLOB_READ_WRITE_TOKEN'):
         print("ОШИБКА: Переменная окружения BLOB_READ_WRITE_TOKEN не найдена.")
-        print("Пожалуйста, выполните 'vercel env pull .env.development.local' перед запуском.")
+        print("Убедитесь, что файл .env.development.local существует и содержит токен.")
     else:
         upload_files_to_blob()
-
