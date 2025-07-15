@@ -2,8 +2,17 @@
 
 import os
 import mimetypes
+import dotenv
 from vercel_blob import put
+from mutagen.mp3 import MP3
+from mutagen.wave import WAVE
+from mutagen import MutagenError
 from dotenv import load_dotenv
+
+# Загрузка переменных окружения из .env.development.local
+print("Загрузка переменных окружения из .env.development.local...")
+dotenv.load_dotenv('.env.development.local')
+
 
 MUSIC_DIR = 'music'
 
@@ -42,7 +51,7 @@ def upload_files_to_blob():
 
 if __name__ == '__main__':
     print("Загрузка переменных окружения из .env.development.local...")
-    load_dotenv('.env.development.local')
+    dotenv.load_dotenv('.env.local')
     
     token = os.environ.get('BLOB_READ_WRITE_TOKEN')
     
@@ -52,4 +61,5 @@ if __name__ == '__main__':
     else:
         # ✅ ДИАГНОСТИКА: Выводим часть токена для проверки
         print(f"Используется токен, начинающийся с: {token[:15]}...")
+
         upload_files_to_blob()
