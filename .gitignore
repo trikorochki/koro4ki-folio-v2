@@ -1,5 +1,7 @@
 .env*.local
 # Python virtual environment
 /venv
-.env
+.env*
 /music
+.env.development.local
+.env
