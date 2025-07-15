@@ -2,14 +2,34 @@
   "version": 2,
   "builds": [
     {
-      "src": "api/listen.py",
+      "src": "api/**/*.py",
       "use": "@vercel/python"
+    },
+    {
+      "src": "*.html",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "style.css",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "*.js",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "images/**",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "favicon.ico",
+      "use": "@vercel/static"
     }
   ],
   "routes": [
     {
       "src": "/api/listen",
-      "dest": "/api/listen.py"
+      "dest": "api/listen.py"
     }
   ]
 }
