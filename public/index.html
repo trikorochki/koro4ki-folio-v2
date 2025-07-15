@@ -13,23 +13,35 @@
     <link rel="icon" href="favicon.ico">
 </head>
 <body>
+    <!-- ИЗМЕНЕНИЕ: Добавлена кнопка Play Random в шапку -->
     <header class="site-header">
         <a href="index.html" class="logo-link">
             <img src="images/kr4-logo.png" alt="KR4 Neuromusic Production Logo">
         </a>
+        
+        <!-- Кнопка Play Random - только на главной странице -->
+        <button class="header-play-random-btn" id="main-play-random-btn">
+            <div class="play-circle">
+                <div class="play-triangle"></div>
+                <div class="pause-symbol"></div>
+            </div>
+            <span class="play-text"></span>
+        </button>
+        
         <nav class="site-nav">
             <div class="dropdown">
-                <button class="dropdown-btn">Our artists &darr;</button>
+                <button class="dropdown-btn">Artists &darr;</button>
                 <div class="dropdown-content" id="artist-dropdown-menu"></div>
             </div>
         </nav>
     </header>
     
     <div class="landing-container">
-        <h1>Four worlds. One universe.</h1>
-        <button class="main-play-random-btn" id="main-play-random-btn">
-            <span class="play-icon">&#9658;</span> Play Random
-        </button>
+        <!-- ИЗМЕНЕНИЕ: Новая структура заголовка -->
+        <div class="main-title">
+            <h1>Five worlds.</h1>
+            <h2>One universe</h2>
+        </div>
 
         <div class="artist-choice-container">
             <a href="artist.html?artist=flowkorochki" class="artist-choice-card">
@@ -45,25 +57,29 @@
             <a href="artist.html?artist=riffkorochki" class="artist-choice-card">
                 <img src="images/riffkorochki.jpg" alt="Аватар RIFFKORO4KI">
                 <h2>RIFFKORO4KI</h2>
-                <p>The blend of experimental hip-hop and nu metal.</p>
+                <p>The blend of experimental hip-hop and riffs.</p>
             </a>
             <a href="artist.html?artist=trapkorochki" class="artist-choice-card">
                 <img src="images/trapkorochki.jpg" alt="Аватар TRAPKORO4KI">
                 <h2>TRAPKORO4KI</h2>
                 <p>A fusion of noir trap and digital decadence.</p>
             </a>
-            <!-- <a href="artist.html?artist=echorochki" class="artist-choice-card">
-                <img src="images/echorochki.jpg" alt="Аватар ECHORO4KI">
-                <h2>ECHORO4KI</h2>
-                <p>Militant 90s alternative rock anthem.</p>
-            </a> -->
-            <!-- Добавьте сюда карточку для третьего артиста, если нужно -->
+            <a href="artist.html?artist=streetkorochki" class="artist-choice-card">
+                <img src="images/streetkorochki.jpg" alt="Аватар STREETKORO4KI">
+                <h2>STREETKORO4KI</h2>
+                <p>Satirical rap dismantling social pretenses.</p>
+            </a>
         </div>
     </div>
 
     <!-- Футер с копирайтом -->
     <footer class="site-footer">
-        © 2025 kr4.pro Neuromusic Production. All rights reserved.
+        <div class="footer-content">
+            <p class="copyright">© 2025 kr4.pro Neuromusic Production. All rights reserved.</p>
+            <div class="contact-info">
+                <p>Contact us: <a href="mailto:hey@kr4.pro" class="email-link">hey@kr4.pro</a></p>
+            </div>
+        </div>
     </footer>
 
     <!-- Стандартный нижний плеер -->

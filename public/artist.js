@@ -139,9 +139,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const tracksToDisplay = showingAllTracks ? allArtistTracks : allArtistTracks.slice(0, 5);
 
         tracksToDisplay.forEach(track => {
-            // --- ИЗМЕНЕНИЕ: Добавлена длительность трека ---
+            // --- ИЗМЕНЕНИЕ: Добавлен интерактивный номер трека ---
             tracklistContainer.innerHTML += `
                 <div class="track-item" data-file-path="${track.file}">
+                    <div class="track-number">
+                        <span class="track-number-text">${track.num || '—'}</span>
+                        <div class="track-number-play"></div>
+                        <div class="track-number-equalizer">
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                        </div>
+                    </div>
                     <div class="track-item-info">
                         <div class="track-item-title">${track.title}</div>
                         <div class="track-item-album">${track.albumName}</div>
@@ -182,10 +192,20 @@ document.addEventListener('DOMContentLoaded', () => {
         currentPlaylist = album.tracks.map((track, i) => ({ ...track, albumName: album.name, albumType, albumIndex, trackIndex: i }));
 
         currentPlaylist.forEach((track) => {
-            // --- ИЗМЕНЕНИЕ: Добавлена длительность трека ---
+            // --- ИЗМЕНЕНИЕ: Добавлен интерактивный номер трека ---
             playlistContainer.innerHTML += `
                 <div class="track-item" data-file-path="${track.file}">
-                     <div class="track-item-info">
+                    <div class="track-number">
+                        <span class="track-number-text">${track.num || '—'}</span>
+                        <div class="track-number-play"></div>
+                        <div class="track-number-equalizer">
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                        </div>
+                    </div>
+                    <div class="track-item-info">
                         <div class="track-item-title">${track.title}</div>
                     </div>
                     <span class="track-item-duration">${track.duration ? formatTime(track.duration) : '—:—'}</span>

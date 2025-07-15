@@ -1,4 +1,4 @@
-# build_playlist.py - ОБНОВЛЕННАЯ ВЕРСИЯ
+# build_playlist.py - ОБНОВЛЕННАЯ ВЕРСИЯ С ПАРСИНГОМ НОМЕРОВ ТРЕКОВ
 
 import os
 import json
@@ -24,7 +24,7 @@ ARTIST_INFO = {
     "riffkorochki": {
         "name": "RIFFKORO4KI",
         "image": "images/riffkorochki.jpg",
-        "description_line1": "The blend of experimental hip-hop and nu metal.",
+        "description_line1": "The blend of experimental hip-hop and riffs.",
         "description_line2": "A drop of common sense for your soul."
     },
     "trapkorochki": {
@@ -32,7 +32,14 @@ ARTIST_INFO = {
         "image": "images/trapkorochki.jpg",
         "description_line1": "A fusion of noir trap and digital decadence.",
         "description_line2": "The architecture of the void for your veins."
+    },
+    "streetkorochki": {
+        "name": "STREETKORO4KI",
+        "image": "images/streetkorochki.jpg",
+        "description_line1": "Satirical rap dismantling social pretenses.",
+        "description_line2": "Fast-paced trap-drill with polyrhythmic chaos."
     }
+
   #  "echorochki": {
   #      "name": "ECHORO4KI",
   #      "image": "images/echorochki.jpg",
@@ -70,6 +77,49 @@ def get_audio_duration(file_path):
         print(f"      ОБЩАЯ ОШИБКА: Не удалось обработать файл '{file_path}'. Ошибка: {e}")
         return 0
 
+def parse_track_number_and_title(filename):
+    """
+    Извлекает номер трека и чистое название из имени файла.
+    Поддерживает различные форматы нумерации.
+    
+    Args:
+        filename (str): Имя файла с расширением
+        
+    Returns:
+        tuple: (номер_трека, чистое_название, оригинальное_название)
+    """
+    title = os.path.splitext(filename)[0]  # Убираем расширение
+    original_title = title
+    
+    # Паттерны для различных форматов номеров
+    patterns = [
+        r'^(\d{1,2})[\s\.\-_]+(.+)$',  # "01 Title" или "01. Title" или "01-Title" или "01_Title"
+        r'^Track[\s]*(\d{1,2})[\s\.\-_]*(.+)$',  # "Track 01 Title" или "Track01 Title"
+        r'^(\d{1,2})([A-Za-z].+)$',  # "01Title" (без разделителя, но с буквой после номера)
+        r'^(\d{1,2})$',  # Только номер "01"
+    ]
+    
+    for pattern in patterns:
+        match = re.match(pattern, title.strip())
+        if match:
+            num = int(match.group(1))
+            
+            # Проверяем, есть ли название после номера
+            if len(match.groups()) > 1 and match.group(2):
+                clean_title = match.group(2).strip()
+                # Убираем возможные дополнительные разделители в начале названия
+                clean_title = re.sub(r'^[\s\.\-_]+', '', clean_title)
+            else:
+                # Если только номер, используем оригинальное название
+                clean_title = title
+            
+            print(f"      Парсинг: '{original_title}' -> номер {num}, название '{clean_title}'")
+            return num, clean_title, original_title
+    
+    # Если номер не найден, возвращаем None для автоматической нумерации
+    print(f"      Парсинг: '{original_title}' -> номер не найден, будет автоматическая нумерация")
+    return None, title, original_title
+
 def create_playlist_data():
     artist_data = {}
     print(f"Сканирую директорию: {MUSIC_DIR}")
@@ -95,24 +145,51 @@ def create_playlist_data():
                 if os.path.isdir(release_path):
                     album_obj = {"name": release_folder_name, "cover": None, "tracks": []}
                     track_files = sorted(os.listdir(release_path), key=natural_sort_key)
+                    
+                    # Собираем все аудиофайлы для правильной нумерации
+                    audio_files = [f for f in track_files if f.lower().endswith(('.mp3', '.wav'))]
 
-                    for f in track_files:
+                    for index, f in enumerate(track_files):
                         url_path = os.path.join('music', artist_id, release_folder_name, f).replace("\\", "/")
                         
                         if f.lower() == 'cover.jpg':
                             album_obj["cover"] = url_path
                         elif f.lower().endswith(('.mp3', '.wav')):
-                            # --- ИЗМЕНЕНИЕ ЗДЕСЬ ---
+                            # --- НОВАЯ ЛОГИКА: Парсим номер трека и название ---
+                            parsed_num, clean_title, original_title = parse_track_number_and_title(f)
+                            
+                            # Если номер не найден, используем порядковый номер в списке аудиофайлов
+                            if parsed_num is None:
+                                audio_file_index = audio_files.index(f)
+                                track_num = audio_file_index + 1
+                            else:
+                                track_num = parsed_num
+                            
+                            # Получаем длительность
                             full_file_path = os.path.join(release_path, f)
                             duration = get_audio_duration(full_file_path)
-                            # -------------------------
-                            track_title = os.path.splitext(f)[0]
-                            # --- ИЗМЕНЕНИЕ ЗДЕСЬ: Добавляем 'duration' в объект трека ---
-                            album_obj["tracks"].append({"title": track_title, "file": url_path, "duration": duration})
+                            
+                            # Создаем расширенный объект трека
+                            track_obj = {
+                                "num": track_num,
+                                "title": clean_title,
+                                "originalTitle": original_title,  # Для отладки и совместимости
+                                "file": url_path,
+                                "duration": duration
+                            }
+                            
+                            album_obj["tracks"].append(track_obj)
+                            print(f"    Трек {track_num}: '{clean_title}' ({duration}s)")
+                    
+                    # Сортируем треки по номерам для корректного порядка
+                    if album_obj["tracks"]:
+                        album_obj["tracks"].sort(key=lambda x: x["num"])
+                        print(f"    Отсортировано {len(album_obj['tracks'])} треков по номерам")
                     
                     if album_obj["cover"] is None:
                         print(f"      ПРЕДУПРЕЖДЕНИЕ: Не найдена обложка для '{release_folder_name}'")
 
+                    # Определяем тип релиза и добавляем в соответствующую категорию
                     if release_folder_name.lower().startswith('album.'):
                         album_obj['name'] = release_folder_name[len('album.'):].strip()
                         artist_data[artist_id]["albums"].append(album_obj)
@@ -132,7 +209,7 @@ def create_playlist_data():
         js_content = f"window.artistData = {json.dumps(artist_data, indent=4, ensure_ascii=False)};"
         f.write(js_content)
 
-    print(f"\nГотово! Файл '{OUTPUT_FILE}' успешно обновлен с точными данными о длительности треков.")
+    print(f"\nГотово! Файл '{OUTPUT_FILE}' успешно обновлен с точными данными о длительности треков и номерами.")
 
 if __name__ == '__main__':
     create_playlist_data()
