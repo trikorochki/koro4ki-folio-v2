@@ -1,0 +1,4 @@
+redis
+vercel-blob
+python-dotenv
+mutagen
