@@ -1,79 +1,118 @@
-# api/listen.py - Финальная версия с комплексным сбором аналитики
-
+# api/listen.py - Единый обработчик аналитики
 import os
 import json
 import logging
 from http.server import BaseHTTPRequestHandler
-from redis import from_url
+from redis import from_url, RedisError
 from user_agents import parse
 from datetime import datetime, timezone
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+# --- Конфигурация логирования ---
+# Настраиваем один раз при загрузке модуля
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
 
 class handler(BaseHTTPRequestHandler):
+    """
+    Обрабатывает входящие события аналитики, такие как прослушивания треков,
+    и собирает анонимную статистику и диагностическую информацию.
+    """
+
+    def _get_redis_client(self):
+        """Подключается к Redis, выбрасывая исключение, если URL не найден."""
+        redis_url = os.environ.get("REDIS_URL")
+        if not redis_url:
+            logging.error("REDIS_URL is not set in environment variables.")
+            raise ConnectionError("Database configuration is missing.")
+        try:
+            return from_url(redis_url)
+        except RedisError as e:
+            logging.error(f"Failed to connect to Redis: {e}")
+            raise ConnectionError("Could not connect to the database.") from e
+
+    def _send_response(self, status_code, content_type='application/json', body=None):
+        """Отправляет HTTP-ответ клиенту."""
+        self.send_response(status_code)
+        self.send_header('Content-type', content_type)
+        self.end_headers()
+        if body:
+            self.wfile.write(body.encode('utf-8'))
+
+    def _send_error(self, status_code, message):
+        """Форматирует и отправляет стандартизированный ответ с ошибкой."""
+        error_payload = json.dumps({'error': message})
+        self._send_response(status_code, body=error_payload)
+
     def do_POST(self):
         try:
-            # --- 1. Сбор всей информации из запроса и заголовков ---
+            # --- 1. Сбор и валидация данных ---
             content_length = int(self.headers.get('Content-Length', 0))
+            if content_length == 0:
+                return self._send_error(400, "Request body is empty.")
+
             post_data = self.rfile.read(content_length)
             data = json.loads(post_data.decode('utf-8'))
-            
+
             track_id = data.get('trackId')
+            if not track_id:
+                return self._send_error(400, "trackId is required.")
+
             event_type = data.get('eventType', 'unknown')
-            
-            user_agent_string = self.headers.get('User-Agent')
+            user_agent_string = self.headers.get('User-Agent', 'Unknown')
             user_agent = parse(user_agent_string)
-            
             ip_address = self.headers.get('X-Forwarded-For', 'Not Found')
             country_code = self.headers.get('X-Vercel-IP-Country', 'XX')
 
-            if not track_id:
-                self.send_error_response(400, "trackId is required.")
-                return
-
-            # --- 2. Подключение к Redis ---
-            redis_url = os.environ.get("REDIS_URL")
-            if not redis_url:
-                raise ConnectionError("Server configuration error: Database URL is not set.")
-            
-            redis_client = from_url(redis_url)
-            
-            # --- 3. Атомарная запись всех данных через pipeline ---
+            # --- 2. Работа с Redis ---
+            redis_client = self._get_redis_client()
             pipe = redis_client.pipeline()
+
+            # --- 3. Формирование команд для атомарной записи ---
             
-            # Основной счетчик прослушиваний (только для ключевого события)
+            # 3.1. Основной счетчик прослушиваний (только для ключевого события)
             if event_type == '30s_listen':
                 pipe.hincrby('v2:listen_counts', track_id, 1)
 
-            # Общий счетчик всех событий по каждому треку
+            # 3.2. Общий счетчик всех событий по треку
             pipe.hincrby(f'v2:events:{track_id}', event_type, 1)
 
-            # Агрегированная анонимная статистика
+            # 3.3. Агрегированная анонимная статистика
             pipe.hincrby('v2:stats:browsers', user_agent.browser.family, 1)
             pipe.hincrby('v2:stats:os', user_agent.os.family, 1)
             pipe.hincrby('v2:stats:devices', 'Mobile' if user_agent.is_mobile else 'Desktop', 1)
             pipe.hincrby('v2:stats:countries', country_code, 1)
             
-            # Временное хранилище для IP-адресов (диагностика)
+            # 3.4. Диагностический лог (заменяет функциональность ping.py)
             timestamp = datetime.now(timezone.utc).isoformat()
-            ip_record_key = f"{timestamp}-{ip_address}"
-            ip_payload = json.dumps({'ip': ip_address, 'country': country_code, 'ua': user_agent_string})
-            pipe.hset('v2:diagnostic_logs', ip_record_key, ip_payload)
+            log_key = f"{timestamp}-{ip_address}"
+            log_payload = json.dumps({
+                'ip': ip_address,
+                'country': country_code,
+                'userAgent': user_agent_string,
+                'trackId': track_id,
+                'eventType': event_type
+            })
+            # Используем HSET для сохранения в хеш-таблицу 'v2:diagnostic_logs'
+            pipe.hset('v2:diagnostic_logs', log_key, log_payload)
             
+            # --- 4. Выполнение всех команд в одной транзакции ---
             pipe.execute()
 
-            logging.info(f"Event '{event_type}' for track '{track_id}' from IP {ip_address} processed.")
+            logging.info(f"Successfully processed event '{event_type}' for track '{track_id}'.")
+            
+            # --- 5. Отправка успешного ответа ---
+            self._send_response(204) # 204 No Content
 
-            # --- 4. Отправка успешного ответа ---
-            self.send_response(204) # 204 No Content, идеально для фоновых запросов
-            self.end_headers()
-
+        except json.JSONDecodeError:
+            logging.warning("Failed to decode JSON from request body.")
+            self._send_error(400, "Invalid JSON format.")
+        except ConnectionError as e:
+            logging.critical(f"Redis connection failed: {e}")
+            self._send_error(503, "Service Unavailable: Cannot connect to the database.")
         except Exception as e:
-            logging.exception(f"Error in listen API v2: {e}")
-            self.send_error_response(500, "An internal server error occurred.")
+            # Общий обработчик для непредвиденных ошибок
+            logging.exception(f"An unexpected error occurred in listen handler: {e}")
+            self._send_error(500, "An internal server error occurred.")
 
-    def send_error_response(self, code, message):
-        self.send_response(code)
-        self.send_header('Content-type', 'application/json')
-        self.end_headers()
-        self.wfile.write(json.dumps({'error': message}).encode('utf-8'))
