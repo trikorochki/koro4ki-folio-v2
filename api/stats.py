@@ -1,4 +1,4 @@
-# api/stats.py - Финальная версия с группировкой данных на сервере
+# api/stats.py - Исправленная версия с более надежным парсингом и логированием
 
 import os
 import json
@@ -35,36 +35,47 @@ class handler(BaseHTTPRequestHandler):
             
             # --- 3. Группировка и обработка данных (Ключевое изменение) ---
             stats = defaultdict(lambda: {'total_plays': 0, 'albums': defaultdict(lambda: {'total_plays': 0, 'tracks': []})})
+            
+            logging.info(f"Found {len(listen_counts_bytes)} records in Redis. Starting parsing...")
 
             for path_bytes, plays_bytes in listen_counts_bytes.items():
                 try:
                     path = path_bytes.decode('utf-8')
                     plays = int(plays_bytes.decode('utf-8'))
-                    
-                    # Парсим путь: music/artist/album/track.mp3
-                    parts = path.split('/')
-                    if len(parts) >= 4 and parts[0] == 'music':
-                        artist_name = parts[1]
-                        album_name_raw = parts[2]
-                        track_name_raw = os.path.splitext(parts[3])[0]
+                    logging.info(f"Processing path: '{path}' with {plays} plays.")
+
+                    # ✅ ИСПРАВЛЕНИЕ: Делаем парсинг более гибким и надежным
+                    path_without_prefix = path[len('music/'):] if path.startswith('music/') else path
+                    parts = path_without_prefix.split('/')
+
+                    # Ожидаем структуру: {artist}/{album}/{track_file}
+                    if len(parts) == 3:
+                        artist_name = parts[0]
+                        album_name_raw = parts[1]
+                        track_file = parts[2]
+                        track_name_raw = os.path.splitext(track_file)[0]
 
                         # Очищаем названия от префиксов
-                        album_name = re.sub(r'^(Album|EP|Demo)\.\s*', '', album_name_raw, flags=re.IGNORECASE)
-                        track_name = re.sub(r'^\d{1,2}[\s.\-_]*', '', track_name_raw)
+                        album_name = re.sub(r'^(Album|EP|Demo)\.\s*', '', album_name_raw, flags=re.IGNORECASE).strip()
+                        track_name = re.sub(r'^\d{1,2}[\s.\-_]*', '', track_name_raw).strip()
 
                         # Накапливаем статистику
                         stats[artist_name]['total_plays'] += plays
                         stats[artist_name]['albums'][album_name]['total_plays'] += plays
                         stats[artist_name]['albums'][album_name]['tracks'].append({'title': track_name, 'plays': plays})
+                    else:
+                        logging.warning(f"Path '{path}' does not match expected structure (artist/album/track). Skipping.")
 
-                except (UnicodeDecodeError, ValueError, IndexError):
-                    logging.warning(f"Could not parse record: {path_bytes}")
+                except (UnicodeDecodeError, ValueError, IndexError) as e:
+                    logging.error(f"Could not parse record for path '{path_bytes.decode('utf-8', errors='ignore')}'. Error: {e}")
                     continue
             
             # Сортируем треки внутри каждого альбома
             for artist in stats.values():
                 for album in artist['albums'].values():
                     album['tracks'].sort(key=lambda x: x['plays'], reverse=True)
+
+            logging.info(f"Parsing complete. Returning stats for {len(stats)} artists.")
 
             # --- 4. Отправка успешного ответа ---
             self.send_response(200)
