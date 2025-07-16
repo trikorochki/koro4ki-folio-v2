@@ -1,12 +1,24 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // --- Элементы DOM ---
     const fetchBtn = document.getElementById('fetch-data-btn');
     const secretInput = document.getElementById('api-secret-input');
     const statusEl = document.getElementById('status');
     const dashboard = document.getElementById('dashboard-content');
 
+    // --- Шаблоны ---
+    const audienceCardTemplate = document.getElementById('audience-card-template');
+    const logRowTemplate = document.getElementById('log-row-template');
+    const artistTemplate = document.getElementById('artist-group-template');
+    const albumTemplate = document.getElementById('album-group-template');
+    const trackTemplate = document.getElementById('track-item-template');
+
+    // --- Обработчик клика ---
     fetchBtn.addEventListener('click', async () => {
         const secretToken = secretInput.value.trim();
-        if (!secretToken) { statusEl.textContent = 'Ошибка: Введите секретный ключ.'; return; }
+        if (!secretToken) {
+            statusEl.textContent = 'Ошибка: Введите секретный ключ.';
+            return;
+        }
         
         statusEl.textContent = 'Загрузка данных...';
         dashboard.style.display = 'none';
@@ -29,22 +41,26 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     
+    // --- Функции рендеринга ---
+
     const renderAudienceStats = (stats) => {
         const grid = document.getElementById('audience-stats-grid');
         grid.innerHTML = '';
         const statCategories = { 'Страны': stats.countries, 'Браузеры': stats.browsers, 'ОС': stats.os, 'Устройства': stats.devices };
 
         for (const [title, data] of Object.entries(statCategories)) {
-            const card = document.createElement('div');
-            card.className = 'stat-card';
-            let listItems = `<h3>${title}</h3><ul>`;
+            const cardFragment = audienceCardTemplate.content.cloneNode(true);
+            cardFragment.querySelector('h3').textContent = title;
+            const list = cardFragment.querySelector('ul');
+            
             const sortedData = Object.entries(data).sort(([, a], [, b]) => b - a);
+
             for (const [key, value] of sortedData) {
-                listItems += `<li><span>${key}</span> <strong>${value}</strong></li>`;
+                const li = document.createElement('li');
+                li.innerHTML = `<span>${key}</span> <strong>${value}</strong>`;
+                list.appendChild(li);
             }
-            listItems += `</ul>`;
-            card.innerHTML = listItems;
-            grid.appendChild(card);
+            grid.appendChild(cardFragment);
         }
     };
 
@@ -52,11 +68,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const tbody = document.getElementById('diagnostics-tbody');
         tbody.innerHTML = '';
         logs.forEach(record => {
-            const row = tbody.insertRow();
-            row.insertCell(0).textContent = new Date(record.timestamp).toLocaleString('ru-RU', { timeZone: 'UTC' });
-            row.insertCell(1).textContent = record.ip;
-            row.insertCell(2).textContent = record.country;
-            row.insertCell(3).textContent = record.userAgent;
+            const rowFragment = logRowTemplate.content.cloneNode(true);
+            const cells = rowFragment.querySelectorAll('td');
+            cells[0].textContent = new Date(record.timestamp).toLocaleString('ru-RU', { timeZone: 'UTC' });
+            cells[1].textContent = record.ip;
+            cells[2].textContent = record.country;
+            cells[3].textContent = record.userAgent;
+            tbody.appendChild(rowFragment);
         });
     };
 
@@ -67,46 +85,42 @@ document.addEventListener('DOMContentLoaded', () => {
 
         artists.forEach(artistName => {
             const artistData = stats[artistName];
-            const artistGroup = document.createElement('div');
-            artistGroup.className = 'artist-group';
-            artistGroup.innerHTML = `
-                <div class="artist-header">
-                    <span>${artistName}</span>
-                    <span class="total-plays">Всего прослушиваний: ${artistData.total_plays}</span>
-                </div>
-                <div class="album-list"></div>
-            `;
+            const artistFragment = artistTemplate.content.cloneNode(true);
+            
+            artistFragment.querySelector('.artist-name').textContent = artistName;
+            artistFragment.querySelector('.total-plays').textContent = `Всего прослушиваний: ${artistData.total_plays}`;
+            const albumList = artistFragment.querySelector('.album-list');
 
-            const albumList = artistGroup.querySelector('.album-list');
             const sortedAlbums = Object.keys(artistData.albums).sort((a, b) => artistData.albums[b].total_plays - artistData.albums[a].total_plays);
 
             sortedAlbums.forEach(albumName => {
                 const albumData = artistData.albums[albumName];
-                const albumGroup = document.createElement('div');
-                albumGroup.className = 'album-group';
-                let tracksHtml = '';
+                const albumFragment = albumTemplate.content.cloneNode(true);
+
+                albumFragment.querySelector('.album-name').textContent = albumName;
+                albumFragment.querySelector('.total-plays').textContent = `Прослушиваний: ${albumData.total_plays}`;
+                const trackList = albumFragment.querySelector('.track-list');
+
                 albumData.tracks.forEach(track => {
-                    const eventsStr = Object.entries(track.events).map(([e, c]) => `${e}: ${c}`).join(', ');
-                    tracksHtml += `<div class="track-item"><div>${track.title}<div class="event-details">${eventsStr}</div></div> <strong>${track.plays}</strong></div>`;
+                    const trackFragment = trackTemplate.content.cloneNode(true);
+                    trackFragment.querySelector('.track-title').textContent = track.title;
+                    trackFragment.querySelector('.track-plays').textContent = track.plays;
+                    trackFragment.querySelector('.event-details').textContent = Object.entries(track.events).map(([e, c]) => `${e}: ${c}`).join('; ');
+                    trackList.appendChild(trackFragment);
                 });
-                albumGroup.innerHTML = `
-                    <div class="album-header">
-                        <span>${albumName}</span>
-                        <span class="total-plays">Прослушиваний: ${albumData.total_plays}</span>
-                    </div>
-                    <div class="track-list">${tracksHtml}</div>
-                `;
-                albumList.appendChild(albumGroup);
+                albumList.appendChild(albumFragment);
             });
-            container.appendChild(artistGroup);
+            container.appendChild(artistFragment);
         });
         
-        // Добавляем интерактивность аккордеону
+        // Механизм аккордеона остается без изменений, он идеален
         container.addEventListener('click', (e) => {
             const header = e.target.closest('.artist-header, .album-header');
             if (!header) return;
             const content = header.nextElementSibling;
-            content.style.display = content.style.display === 'block' ? 'none' : 'block';
+            if(content) {
+                content.style.display = content.style.display === 'block' ? 'none' : 'block';
+            }
         });
     };
 });
