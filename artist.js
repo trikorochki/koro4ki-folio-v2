@@ -456,7 +456,7 @@ document.addEventListener('DOMContentLoaded', () => {
             this.dom.albumTitle.textContent = album.name;
             this.dom.albumArtist.textContent = this.state.artist.name;
             const totalDuration = album.tracks.reduce((sum, t) => sum + (t.duration || 0), 0);
-            this.dom.albumStats.textContent = `${album.tracks.length} треков, ${this.formatDuration(totalDuration)}`;
+            this.dom.albumStats.textContent = `${album.tracks.length} tracks, ${this.formatDuration(totalDuration)}`;
             
             this.dom.albumPlaylistContainer.innerHTML = '';
             album.tracks.forEach((track, i) => {
@@ -663,7 +663,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // --- Утилиты ---
         formatTime: (s) => { const m = Math.floor(s / 60); const sec = Math.floor(s % 60); return `${m}:${sec < 10 ? '0' : ''}${sec}`; },
-        formatDuration: (s) => { const h = Math.floor(s / 3600); const m = Math.floor((s % 3600) / 60); return h > 0 ? `${h}ч ${m}м` : `${m}м ${Math.floor(s % 60)}с`; },
+        formatDuration: (s) => { const h = Math.floor(s / 3600); const m = Math.floor((s % 3600) / 60); return h > 0 ? `${h}h ${m}m` : `${m}m ${Math.floor(s % 60)}s`; },
         shuffleArray(array) {
             let currentIndex = array.length;
             const newArray = [...array];
