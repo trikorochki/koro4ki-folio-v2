@@ -1,4 +1,4 @@
-# api/listen.py - Единый обработчик аналитики (Финальная исправленная версия)
+# api/listen.py - Финальная, исправленная и проверенная версия
 import os
 import json
 import logging
@@ -26,6 +26,8 @@ class handler(BaseHTTPRequestHandler):
             logging.error("REDIS_URL is not set in environment variables.")
             raise ConnectionError("Database configuration is missing.")
         try:
+            # Важно: Не используем decode_responses=True для записи,
+            # чтобы избежать конфликтов типов с hincrby.
             return from_url(redis_url)
         except RedisError as e:
             logging.error(f"Failed to connect to Redis: {e}")
@@ -58,7 +60,9 @@ class handler(BaseHTTPRequestHandler):
             if not track_id:
                 return self._send_error(400, "trackId is required.")
 
+            # Определяем переменную в стандартном для Python стиле snake_case
             event_type = data.get('eventType', 'unknown')
+
             user_agent_string = self.headers.get('User-Agent', 'Unknown')
             user_agent = parse(user_agent_string)
             ip_address = self.headers.get('X-Forwarded-For', 'Not Found')
@@ -69,6 +73,7 @@ class handler(BaseHTTPRequestHandler):
             pipe = redis_client.pipeline()
 
             # --- 3. Формирование команд для атомарной записи ---
+            # Последовательно используем переменную event_type
             
             if event_type == '30s_listen':
                 pipe.hincrby('v2:listen_counts', track_id, 1)
@@ -96,7 +101,7 @@ class handler(BaseHTTPRequestHandler):
             # --- 4. Выполнение всех команд ---
             pipe.execute()
 
-            logging.info(f"Successfully processed event '{eventType}' for track '{track_id}'.")
+            logging.info(f"Successfully processed event '{event_type}' for track '{track_id}'.")
             
             # --- 5. Отправка успешного ответа ---
             self._send_response(204)
