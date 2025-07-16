@@ -41,7 +41,7 @@ class handler(BaseHTTPRequestHandler):
         redis_url = os.environ.get("REDIS_URL")
         if not redis_url:
             raise ConnectionError("Database configuration is missing.")
-        return from_url(redis_url)
+        return from_url(redis_url, decode_responses=True) # Важное добавление для авто-декодирования
 
     def _send_response(self, status_code, content_type='application/json; charset=utf-8', body=None):
         """Отправляет HTTP-ответ."""
@@ -59,11 +59,9 @@ class handler(BaseHTTPRequestHandler):
     def _fetch_all_data(self, redis_client):
         """
         Извлекает всю необходимую статистику из Redis за минимальное число запросов.
-        РЕШАЕТ ПРОБЛЕМУ N+1.
         """
         pipe = redis_client.pipeline()
         
-        # 1. Запрашиваем основные данные
         pipe.hgetall('v2:listen_counts')
         pipe.hgetall('v2:stats:browsers')
         pipe.hgetall('v2:stats:os')
@@ -71,7 +69,6 @@ class handler(BaseHTTPRequestHandler):
         pipe.hgetall('v2:stats:countries')
         pipe.hgetall('v2:diagnostic_logs')
         
-        # 2. Находим все ключи событий и запрашиваем их данные
         event_keys = redis_client.keys('v2:events:*')
         if event_keys:
             for key in event_keys:
@@ -79,23 +76,36 @@ class handler(BaseHTTPRequestHandler):
         
         results = pipe.execute()
         
-        # Разбираем результаты
+        # --- КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ ЗДЕСЬ ---
+        # Безопасно обрабатываем диагностические логи, отбрасывая записи без 'timestamp'
+        raw_logs = results[5]
+        diagnostic_logs = []
+        for log_json in raw_logs.values():
+            try:
+                record = json.loads(log_json)
+                if 'timestamp' in record: # Проверяем наличие ключа
+                    diagnostic_logs.append(record)
+            except (json.JSONDecodeError, TypeError):
+                # Игнорируем записи, которые не являются валидным JSON
+                continue
+        
+        # Сортируем только валидные, отфильтрованные записи
+        sorted_logs = sorted(diagnostic_logs, key=lambda x: x['timestamp'], reverse=True)
+
         data = {
-            'listen_counts': {k.decode('utf-8'): int(v) for k, v in results[0].items()},
-            'browsers': {k.decode('utf-8'): int(v) for k, v in results[1].items()},
-            'os': {k.decode('utf-8'): int(v) for k, v in results[2].items()},
-            'devices': {k.decode('utf-8'): int(v) for k, v in results[3].items()},
-            'countries': {k.decode('utf-8'): int(v) for k, v in results[4].items()},
-            'diagnostic_logs': sorted([json.loads(v) for v in results[5].values()], key=lambda x: x['timestamp'], reverse=True)
+            'listen_counts': {k: int(v) for k, v in results[0].items()},
+            'browsers': {k: int(v) for k, v in results[1].items()},
+            'os': {k: int(v) for k, v in results[2].items()},
+            'devices': {k: int(v) for k, v in results[3].items()},
+            'countries': {k: int(v) for k, v in results[4].items()},
+            'diagnostic_logs': sorted_logs
         }
         
-        # Собираем данные по событиям в словарь для быстрого доступа
         event_data = {}
         if event_keys:
-            event_results = results[6:] # Данные событий начинаются с 6-го индекса
-            for i, key_bytes in enumerate(event_keys):
-                key = key_bytes.decode('utf-8')
-                event_data[key] = {k.decode('utf-8'): int(v) for k, v in event_results[i].items()}
+            event_results = results[6:]
+            for i, key in enumerate(event_keys):
+                event_data[key] = {k: int(v) for k, v in event_results[i].items()}
         data['events'] = event_data
         
         return data
@@ -115,15 +125,12 @@ class handler(BaseHTTPRequestHandler):
 
                 artist_name, album_raw, track_file = parts[1], parts[2], parts[3]
                 
-                # Очистка имен
                 album_name = re.sub(r'^(Album|EP|Demo)\.\s*', '', album_raw, flags=re.IGNORECASE).strip()
                 track_name = re.sub(r'^\d{1,2}[\s.\-_]*', '', os.path.splitext(track_file)[0]).strip()
                 
-                # Получаем события из уже загруженных данных
                 event_key = f'v2:events:{full_url}'
                 event_details = all_events.get(event_key, {})
 
-                # Агрегация данных
                 artist_stats = grouped_stats[artist_name]
                 album_stats = artist_stats['albums'][album_name]
                 
