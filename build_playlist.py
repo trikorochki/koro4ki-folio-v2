@@ -1,4 +1,4 @@
-# build_playlist.py - Версия, работающая с Vercel Blob и dotenv
+# build_playlist.py - Финальная версия с корректной генерацией Blob URL
 
 import os
 import json
@@ -8,6 +8,7 @@ from mutagen.wave import WAVE
 from mutagen import MutagenError
 from dotenv import load_dotenv
 
+# --- Конфигурация ---
 ARTIST_INFO = {
     "flowkorochki": {"name": "FLOWKORO4KI", "image": "images/flowkorochki.jpg", "description_line1": "Sarcastic and philosophical hip-hop.", "description_line2": "Exploring the boundaries of reality and absurdity."},
     "psykorochki": {"name": "PSYKORO4KI", "image": "images/psykorochki.jpg", "description_line1": "Break-electro-punk-inverted-cyber-hip-hop.", "description_line2": "Musical chaos for the digital world."},
@@ -18,6 +19,10 @@ ARTIST_INFO = {
 
 MUSIC_DIR = 'music'
 OUTPUT_FILE = 'playlist-data.js'
+# --- Конец конфигурации ---
+
+def natural_sort_key(s):
+    return [int(text) if text.isdigit() else text.lower() for text in re.split(r'(\d+)', s)]
 
 def get_audio_duration(file_path):
     try:
@@ -36,7 +41,8 @@ def parse_track_number_and_title(filename):
     for pattern in patterns:
         match = re.match(pattern, title.strip())
         if match:
-            num, clean_title = int(match.group(1)), match.group(2).strip() if len(match.groups()) > 1 and match.group(2) else title
+            num = int(match.group(1))
+            clean_title = match.group(2).strip() if len(match.groups()) > 1 and match.group(2) else title
             return num, re.sub(r'^[\s\.\-_]+', '', clean_title), original_title
     return None, title, original_title
 
@@ -47,6 +53,12 @@ def create_playlist_data():
         return
 
     artist_data = {}
+    print(f"Сканирую директорию: {MUSIC_DIR}")
+
+    if not os.path.exists(MUSIC_DIR):
+        print(f"ОШИБКА: Директория {MUSIC_DIR} не найдена.")
+        return
+
     for artist_id in sorted(os.listdir(MUSIC_DIR)):
         artist_path = os.path.join(MUSIC_DIR, artist_id)
         if os.path.isdir(artist_path):
@@ -56,11 +68,14 @@ def create_playlist_data():
                 release_path = os.path.join(artist_path, release_folder_name)
                 if os.path.isdir(release_path):
                     album_obj = {"name": release_folder_name, "cover": None, "tracks": []}
-                    track_files = sorted(os.listdir(release_path))
+                    track_files = sorted(os.listdir(release_path), key=natural_sort_key)
                     audio_files = [f for f in track_files if f.lower().endswith(('.mp3', '.wav'))]
+
                     for f in track_files:
-                        blob_file_path = f"{artist_id}/{release_folder_name}/{f}".replace("\\", "/")
+                        # ✅ ИСПРАВЛЕНИЕ: Формируем путь, идентичный тому, что был загружен в Blob
+                        blob_file_path = os.path.join(MUSIC_DIR, artist_id, release_folder_name, f).replace("\\", "/")
                         url_path = f"{BLOB_BASE_URL}/{blob_file_path}"
+                        
                         if f.lower() == 'cover.jpg':
                             album_obj["cover"] = url_path
                         elif f.lower().endswith(('.mp3', '.wav')):
@@ -71,23 +86,28 @@ def create_playlist_data():
                     
                     if album_obj["tracks"]: album_obj["tracks"].sort(key=lambda x: x["num"])
                     
+                    type_assigned = False
                     if release_folder_name.lower().startswith('album.'):
                         album_obj['name'] = release_folder_name[len('album.'):].strip()
                         artist_data[artist_id]["albums"].append(album_obj)
+                        type_assigned = True
                     elif release_folder_name.lower().startswith('ep.'):
                         album_obj['name'] = release_folder_name[len('ep.'):].strip()
                         artist_data[artist_id]["eps"].append(album_obj)
+                        type_assigned = True
                     elif release_folder_name.lower().startswith('demo.'):
                         album_obj['name'] = release_folder_name[len('demo.'):].strip()
                         artist_data[artist_id]["demos"].append(album_obj)
+                        type_assigned = True
+                    
+                    if not type_assigned:
+                         print(f"      ПРЕДУПРЕЖДЕНИЕ: Папка '{release_folder_name}' не имеет корректного префикса. Пропущена.")
 
     with open(OUTPUT_FILE, 'w', encoding='utf-8') as f:
         f.write(f"window.artistData = {json.dumps(artist_data, indent=4, ensure_ascii=False)};")
-    print(f"\nГотово! Файл '{OUTPUT_FILE}' успешно обновлен с URL из Vercel Blob.")
+    print(f"\nГотово! Файл '{OUTPUT_FILE}' успешно обновлен с корректными URL из Vercel Blob.")
 
 if __name__ == '__main__':
-    # ✅ ИСПРАВЛЕНИЕ: Загружаем переменные из .env файла перед использованием
     print("Загрузка переменных окружения из .env.development.local...")
     load_dotenv('.env.development.local')
     create_playlist_data()
-
