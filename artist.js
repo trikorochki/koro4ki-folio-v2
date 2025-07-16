@@ -216,6 +216,64 @@ document.addEventListener('DOMContentLoaded', () => {
             this.state.currentPlaylist = [playingTrack, ...shuffled];
         },
 
+        // --- ВОССТАНОВЛЕННАЯ ФУНКЦИОНАЛЬНОСТЬ SHARE ---
+
+        /**
+         * Обрабатывает клики по кнопкам "Поделиться".
+         * Поддерживает нативный Web Share API или копирует в буфер обмена.
+         */
+        handleShareClick(url, button) {
+            const shareData = { 
+                title: document.title, 
+                text: `Check out this music on kr4.pro`, 
+                url: url 
+            };
+            
+            if (navigator.share && navigator.canShare(shareData)) {
+                navigator.share(shareData).catch((error) => {
+                    console.log('Error sharing:', error);
+                });
+            } else {
+                // Fallback: копирование в буфер обмена
+                navigator.clipboard.writeText(url).then(() => {
+                    const originalContent = button.innerHTML;
+                    button.innerHTML = 'Copied!';
+                    setTimeout(() => { 
+                        button.innerHTML = originalContent; 
+                    }, 2000);
+                }).catch((error) => {
+                    console.error('Failed to copy to clipboard:', error);
+                    // Дополнительный fallback для старых браузеров
+                    this.fallbackCopyToClipboard(url, button);
+                });
+            }
+        },
+
+        /**
+         * Fallback для копирования в буфер обмена в старых браузерах.
+         */
+        fallbackCopyToClipboard(text, button) {
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'fixed';
+            textArea.style.opacity = '0';
+            document.body.appendChild(textArea);
+            textArea.select();
+            
+            try {
+                document.execCommand('copy');
+                const originalContent = button.innerHTML;
+                button.innerHTML = 'Copied!';
+                setTimeout(() => { 
+                    button.innerHTML = originalContent; 
+                }, 2000);
+            } catch (err) {
+                console.error('Fallback copy failed:', err);
+            }
+            
+            document.body.removeChild(textArea);
+        },
+
         // --- Обработчики событий плеера ---
         onPlayerPlay(track) {
             this.state.currentTrack = track;
@@ -404,6 +462,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // --- Обработчики кликов (делегирование) ---
         handleArtistPageClick(e) {
+            const shareBtn = e.target.closest('.share-btn');
+            if (shareBtn) {
+                const trackItem = shareBtn.closest('.track-item');
+                if (trackItem) {
+                    const trackData = this.state.allArtistTracks.find(t => t.file === trackItem.dataset.filePath);
+                    const shareUrl = `${location.origin}${location.pathname}?artist=${this.state.artistId}&albumType=${trackData.albumType}&album=${trackData.albumIndex}&track=${trackData.trackIndex}`;
+                    this.handleShareClick(shareUrl, shareBtn);
+                }
+                return;
+            }
+
+            if (e.target.closest('#artist-share-btn')) {
+                const shareUrl = `${location.origin}${location.pathname}?artist=${this.state.artistId}`;
+                this.handleShareClick(shareUrl, e.target.closest('#artist-share-btn'));
+                return;
+            }
+
             const trackItem = e.target.closest('.track-item');
             if (trackItem) {
                 const trackData = this.state.allArtistTracks.find(t => t.file === trackItem.dataset.filePath);
@@ -430,7 +505,24 @@ document.addEventListener('DOMContentLoaded', () => {
         },
 
         handleAlbumPageClick(e) {
-             const trackItem = e.target.closest('.track-item');
+            const shareBtn = e.target.closest('.share-btn');
+            if (shareBtn) {
+                const trackItem = shareBtn.closest('.track-item');
+                if (trackItem) {
+                    const trackData = this.state.currentAlbum.tracks.find(t => t.file === trackItem.dataset.filePath);
+                    const shareUrl = `${location.origin}${location.pathname}?artist=${this.state.artistId}&albumType=${this.state.currentAlbum.type}&album=${this.state.currentAlbum.index}&track=${trackData.trackIndex}`;
+                    this.handleShareClick(shareUrl, shareBtn);
+                }
+                return;
+            }
+
+            if (e.target.closest('#album-share-btn-main')) {
+                const shareUrl = `${location.origin}${location.pathname}?artist=${this.state.artistId}&albumType=${this.state.currentAlbum.type}&album=${this.state.currentAlbum.index}`;
+                this.handleShareClick(shareUrl, e.target.closest('#album-share-btn-main'));
+                return;
+            }
+
+            const trackItem = e.target.closest('.track-item');
             if (trackItem) {
                 const trackData = this.state.currentAlbum.tracks.find(t => t.file === trackItem.dataset.filePath);
                 if (trackData) {
