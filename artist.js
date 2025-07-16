@@ -1,4 +1,15 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // --- Автоматический фоновый сбор диагностических данных ---
+    (async () => {
+        try {
+            await fetch('/api/ping', { method: 'POST' });
+            console.log('Background diagnostic ping sent from artist page.');
+        } catch (error) {
+            console.error('Failed to send background diagnostic ping:', error);
+        }
+    })();
+    // --- Конец блока автоматического сбора ---
+
     if (typeof window.artistData === 'undefined') {
         console.error('ОШИБКА: Данные артистов не найдены.');
         document.body.innerHTML = '<h1>Error: Could not load artist data.</h1>';
@@ -9,14 +20,17 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentTrackData = null;
     let currentPlaylist = [];
     let originalPlaylist = [];
-    let currentPlaylistSource = null; // 'all-tracks' или 'album'
+    let currentPlaylistSource = null;
     let allArtistTracks = [];
     let showingAllTracks = false;
     let artist = null;
     let artistId = null;
     let isPlaying = false;
     let isShuffleOn = false;
-    let listenCounted = false; // Флаг, чтобы засчитать прослушивание один раз
+    
+    // ✅ НОВЫЙ БЛОК: Состояние для расширенной аналитики
+    let listenCounted = false; 
+    let currentTrackForAnalytics = null;
 
     // --- DOM Elements ---
     const audio = document.getElementById('audio-source');
@@ -63,26 +77,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
     
-    // ✅ ИСПРАВЛЕНИЕ: Функция определена здесь, до ее первого вызова, и проверяет статус ответа
-    const logListen = async (trackId) => {
+    // ✅ ИЗМЕНЕНО: Универсальная функция для отправки событий аналитики
+    const logPlayerEvent = async (eventType) => {
+        if (!currentTrackForAnalytics || !currentTrackForAnalytics.file) return;
         try {
-            const response = await fetch('/api/listen', {
+            await fetch('/api/listen', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ trackId }),
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    trackId: currentTrackForAnalytics.file,
+                    eventType: eventType
+                }),
             });
-
-            // Проверяем, что ответ сервера успешный (статус 200-299)
-            if (!response.ok) {
-                // Если нет, генерируем ошибку, которая попадет в catch
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            console.log(`Счетчик для трека ${trackId} успешно обновлен.`);
+            console.log(`Analytics Event: '${eventType}' for track '${currentTrackForAnalytics.title}' sent.`);
         } catch (error) {
-            console.error('Ошибка при отправке данных о прослушивании:', error);
+            console.error(`Failed to log analytics event '${eventType}':`, error);
         }
     };
 
@@ -97,15 +106,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const updatePlayButtonStates = () => {
         const allPlayBtns = document.querySelectorAll('.play-action-btn .play-circle');
         allPlayBtns.forEach(btn => btn.classList.remove('playing'));
-        if (headerRandomBtn) {
-            headerRandomBtn.classList.toggle('playing', isPlaying);
-        }
+        if (headerRandomBtn) headerRandomBtn.classList.toggle('playing', isPlaying);
         if (isPlaying) {
-            if (currentPlaylistSource === 'all-tracks') {
-                document.querySelector('#all-tracks-play-btn .play-circle')?.classList.add('playing');
-            } else if (currentPlaylistSource === 'album') {
-                document.querySelector('#album-play-btn .play-circle')?.classList.add('playing');
-            }
+            if (currentPlaylistSource === 'all-tracks') document.querySelector('#all-tracks-play-btn .play-circle')?.classList.add('playing');
+            else if (currentPlaylistSource === 'album') document.querySelector('#album-play-btn .play-circle')?.classList.add('playing');
         }
     };
     
@@ -129,9 +133,18 @@ document.addEventListener('DOMContentLoaded', () => {
         updateShuffleButtonsState();
     };
     
+    // ✅ МОДИФИЦИРОВАНО: loadAndPlay теперь управляет состоянием аналитики
     const loadAndPlay = (track) => {
         if (!track) return;
-        listenCounted = false; // Сбрасываем флаг счетчика для нового трека
+        
+        // Если предыдущий трек был пропущен, отправляем событие
+        if (isPlaying && currentTrackForAnalytics && !listenCounted) {
+            logPlayerEvent('track_skipped');
+        }
+
+        listenCounted = false;
+        currentTrackForAnalytics = track; // Обновляем трек для аналитики
+        
         showPlayer();
         currentTrackData = track;
         audio.src = track.file;
@@ -170,6 +183,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const handleTrackClick = (trackData, playlistSource) => {
         const isActiveTrack = currentTrackData && currentTrackData.file === trackData.file;
         const isCorrectPlaylist = currentPlaylistSource === playlistSource;
+        
         if (isActiveTrack && isCorrectPlaylist) {
             if (isPlaying) audio.pause();
             else audio.play();
@@ -356,27 +370,38 @@ document.addEventListener('DOMContentLoaded', () => {
         updatePlayerUI();
     };
 
-    // --- Event Listeners Setup ---
-    audio.onplay = () => { isPlaying = true; playPauseBtn.textContent = '⏸'; updatePlayerUI(); };
-    audio.onpause = () => { isPlaying = false; playPauseBtn.textContent = '▶'; updatePlayerUI(); };
+    // --- Event Listeners Setup (модифицированы для аналитики) ---
+    audio.onplay = () => {
+        isPlaying = true;
+        playPauseBtn.textContent = '⏸';
+        updatePlayerUI();
+        // Отправляем событие только при первом старте трека
+        if (audio.currentTime < 1) {
+            logPlayerEvent('play_started');
+        }
+    };
+    audio.onpause = () => {
+        isPlaying = false;
+        playPauseBtn.textContent = '▶';
+        updatePlayerUI();
+    };
     
     audio.ontimeupdate = () => {
         if (audio.duration) {
             progressBar.value = (audio.currentTime / audio.duration) * 100 || 0;
             currentTimeEl.textContent = formatTime(audio.currentTime);
         }
-        // Логика подсчета прослушиваний
+        // ✅ МОДИФИЦИРОВАНО: Логика ключевого события '30s_listen'
         if (!listenCounted && audio.currentTime >= 30) {
-            listenCounted = true; // Считаем только один раз
-            if (currentTrackData && currentTrackData.file) {
-                logListen(currentTrackData.file);
-            }
+            listenCounted = true; // Считаем только один раз за трек
+            logPlayerEvent('30s_listen');
         }
     };
 
     audio.onloadedmetadata = () => { if(audio.duration) durationEl.textContent = formatTime(audio.duration); };
     
     audio.onended = () => {
+        logPlayerEvent('track_completed'); // Трек дослушан до конца
         const currentIndex = findTrackInPlaylist(currentTrackData);
         if (currentIndex !== -1 && currentIndex < currentPlaylist.length - 1) {
             loadAndPlay(currentPlaylist[currentIndex + 1]);
