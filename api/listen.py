@@ -3,6 +3,7 @@ import os
 import json
 import logging
 from http.server import BaseHTTPRequestHandler
+from tkinter import EventType
 from redis import from_url, RedisError
 from user_agents import parse
 from datetime import datetime, timezone
@@ -97,7 +98,7 @@ class handler(BaseHTTPRequestHandler):
             # --- 4. Выполнение всех команд ---
             pipe.execute()
 
-            logging.info(f"Successfully processed event '{eventType}' for track '{track_id}'.")
+            logging.info(f"Successfully processed event '{EventType}' for track '{track_id}'.")
             
             # --- 5. Отправка успешного ответа ---
             self._send_response(204)
