@@ -1,15 +1,4 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // --- Автоматический фоновый сбор диагностических данных ---
-    (async () => {
-        try {
-            await fetch('/api/ping', { method: 'POST' });
-            console.log('Background diagnostic ping sent from artist page.');
-        } catch (error) {
-            console.error('Failed to send background diagnostic ping:', error);
-        }
-    })();
-    // --- Конец блока автоматического сбора ---
-
     if (typeof window.artistData === 'undefined') {
         console.error('ОШИБКА: Данные артистов не найдены.');
         document.body.innerHTML = '<h1>Error: Could not load artist data.</h1>';
@@ -20,17 +9,14 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentTrackData = null;
     let currentPlaylist = [];
     let originalPlaylist = [];
-    let currentPlaylistSource = null;
+    let currentPlaylistSource = null; // 'all-tracks' или 'album'
     let allArtistTracks = [];
     let showingAllTracks = false;
     let artist = null;
     let artistId = null;
     let isPlaying = false;
     let isShuffleOn = false;
-    
-    // ✅ НОВЫЙ БЛОК: Состояние для расширенной аналитики
-    let listenCounted = false; 
-    let currentTrackForAnalytics = null;
+    let listenCounted = false; // Флаг, чтобы засчитать прослушивание один раз
 
     // --- DOM Elements ---
     const audio = document.getElementById('audio-source');
@@ -77,21 +63,26 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
     
-    // ✅ ИЗМЕНЕНО: Универсальная функция для отправки событий аналитики
-    const logPlayerEvent = async (eventType) => {
-        if (!currentTrackForAnalytics || !currentTrackForAnalytics.file) return;
+    // ✅ ИСПРАВЛЕНИЕ: Функция определена здесь, до ее первого вызова, и проверяет статус ответа
+    const logListen = async (trackId) => {
         try {
-            await fetch('/api/listen', {
+            const response = await fetch('/api/listen', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    trackId: currentTrackForAnalytics.file,
-                    eventType: eventType
-                }),
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ trackId }),
             });
-            console.log(`Analytics Event: '${eventType}' for track '${currentTrackForAnalytics.title}' sent.`);
+
+            // Проверяем, что ответ сервера успешный (статус 200-299)
+            if (!response.ok) {
+                // Если нет, генерируем ошибку, которая попадет в catch
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            console.log(`Счетчик для трека ${trackId} успешно обновлен.`);
         } catch (error) {
-            console.error(`Failed to log analytics event '${eventType}':`, error);
+            console.error('Ошибка при отправке данных о прослушивании:', error);
         }
     };
 
@@ -106,10 +97,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const updatePlayButtonStates = () => {
         const allPlayBtns = document.querySelectorAll('.play-action-btn .play-circle');
         allPlayBtns.forEach(btn => btn.classList.remove('playing'));
-        if (headerRandomBtn) headerRandomBtn.classList.toggle('playing', isPlaying);
+        if (headerRandomBtn) {
+            headerRandomBtn.classList.toggle('playing', isPlaying);
+        }
         if (isPlaying) {
-            if (currentPlaylistSource === 'all-tracks') document.querySelector('#all-tracks-play-btn .play-circle')?.classList.add('playing');
-            else if (currentPlaylistSource === 'album') document.querySelector('#album-play-btn .play-circle')?.classList.add('playing');
+            if (currentPlaylistSource === 'all-tracks') {
+                document.querySelector('#all-tracks-play-btn .play-circle')?.classList.add('playing');
+            } else if (currentPlaylistSource === 'album') {
+                document.querySelector('#album-play-btn .play-circle')?.classList.add('playing');
+            }
         }
     };
     
@@ -133,18 +129,9 @@ document.addEventListener('DOMContentLoaded', () => {
         updateShuffleButtonsState();
     };
     
-    // ✅ МОДИФИЦИРОВАНО: loadAndPlay теперь управляет состоянием аналитики
     const loadAndPlay = (track) => {
         if (!track) return;
-        
-        // Если предыдущий трек был пропущен, отправляем событие
-        if (isPlaying && currentTrackForAnalytics && !listenCounted) {
-            logPlayerEvent('track_skipped');
-        }
-
-        listenCounted = false;
-        currentTrackForAnalytics = track; // Обновляем трек для аналитики
-        
+        listenCounted = false; // Сбрасываем флаг счетчика для нового трека
         showPlayer();
         currentTrackData = track;
         audio.src = track.file;
@@ -183,7 +170,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const handleTrackClick = (trackData, playlistSource) => {
         const isActiveTrack = currentTrackData && currentTrackData.file === trackData.file;
         const isCorrectPlaylist = currentPlaylistSource === playlistSource;
-        
         if (isActiveTrack && isCorrectPlaylist) {
             if (isPlaying) audio.pause();
             else audio.play();
@@ -207,48 +193,190 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
     
-    // --- Page Rendering & Navigation (без изменений) ---
-    // Вся ваша сложная логика рендеринга остается нетронутой.
-    const showPage = (pageToShow) => { /* ... */ };
-    const renderArtistPage = () => { /* ... */ };
-    const renderAllTracksSection = () => { /* ... */ };
-    const renderAlbumPage = (albumType, albumIndex) => { /* ... */ };
-    const renderOtherArtistsSection = (currentArtistId) => { /* ... */ };
-    const switchTab = (tabType) => { /* ... */ };
-    const handleNavigation = () => { /* ... */ };
+    // --- Page Rendering & Navigation ---
+    const showPage = (pageToShow) => {
+        artistPage.classList.toggle('active', pageToShow === 'artist');
+        albumPage.classList.toggle('active', pageToShow === 'album');
+        document.body.scrollTop = document.documentElement.scrollTop = 0;
+    };
+    
+    const renderArtistPage = () => {
+        document.getElementById('artist-avatar').src = artist.image;
+        document.getElementById('artist-name').textContent = artist.name;
+        document.getElementById('artist-description-line1').textContent = artist.description_line1;
+        document.getElementById('artist-description-line2').textContent = artist.description_line2;
+        allArtistTracks = [];
+        ['albums', 'eps', 'demos'].forEach((type) => {
+            (artist[type] || []).forEach((release, albumIndex) => {
+                release.tracks.forEach((track, trackIndex) => {
+                    allArtistTracks.push({ ...track, albumName: release.name, albumType: type, albumIndex, trackIndex });
+                });
+            });
+        });
+        renderAllTracksSection();
+        const releaseTypes = ['albums', 'eps', 'demos'];
+        const availableTypes = releaseTypes.filter(type => artist[type] && artist[type].length > 0);
+        releaseTypes.forEach(type => {
+            const tabBtn = document.getElementById(`${type}-tab-btn`);
+            const carousel = document.getElementById(`album-carousel-${type}`);
+            tabBtn.disabled = !artist[type] || artist[type].length === 0;
+            if (!tabBtn.disabled) {
+                carousel.innerHTML = '';
+                artist[type].forEach((album, index) => {
+                    carousel.innerHTML += `<div class="album-card" data-album-type="${type}" data-album-index="${index}"><img src="${album.cover || 'images/default_cover.jpg'}" alt="${album.name}"><p>${album.name}</p></div>`;
+                });
+            }
+        });
+        switchTab(availableTypes[0] || 'albums');
+    };
 
-    // --- Event Listeners Setup (модифицированы для аналитики) ---
-    audio.onplay = () => {
-        isPlaying = true;
-        playPauseBtn.textContent = '⏸';
-        updatePlayerUI();
-        // Отправляем событие только при первом старте трека
-        if (audio.currentTime < 1) {
-            logPlayerEvent('play_started');
+    const renderAllTracksSection = () => {
+        const section = document.getElementById('all-tracks-section');
+        const tracklistContainer = section.querySelector('.track-list');
+        if (!tracklistContainer) return;
+        tracklistContainer.innerHTML = '';
+        const tracksToDisplay = showingAllTracks ? allArtistTracks : allArtistTracks.slice(0, 4);
+        tracksToDisplay.forEach(track => {
+            tracklistContainer.innerHTML += `
+                <div class="track-item" data-file-path="${track.file}" data-album-type="${track.albumType}" data-album-index="${track.albumIndex}">
+                    <div class="track-number">
+                        <span class="track-number-text">${track.num || '—'}</span>
+                        <div class="track-number-play"></div>
+                        <div class="track-number-equalizer"><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>
+                    </div>
+                    <div class="track-item-info">
+                        <div class="track-item-title">${track.title}</div>
+                        <div class="track-item-album">${track.albumName}</div>
+                    </div>
+                    <span class="track-item-duration">${track.duration ? formatTime(track.duration) : '—:—'}</span>
+                    <button class="share-btn" title="Share Track"><svg viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3s3-1.34 3-3-1.34-3-3-3z"></path></svg></button>
+                </div>`;
+        });
+        let showHideBtn = section.querySelector('.show-hide-btn');
+        if (allArtistTracks.length > 4) {
+            if (!showHideBtn) {
+                showHideBtn = document.createElement('button');
+                showHideBtn.className = 'show-hide-btn';
+                section.appendChild(showHideBtn);
+            }
+            showHideBtn.textContent = showingAllTracks ? 'Show less' : 'Show more';
+            showHideBtn.style.display = 'block';
+        } else if (showHideBtn) {
+            showHideBtn.style.display = 'none';
         }
-    };
-    audio.onpause = () => {
-        isPlaying = false;
-        playPauseBtn.textContent = '▶';
         updatePlayerUI();
     };
+    
+    const renderAlbumPage = (albumType, albumIndex) => {
+        const album = artist[albumType][albumIndex];
+        document.getElementById('album-cover').src = album.cover || 'images/default_cover.jpg';
+        document.getElementById('album-title').textContent = album.name;
+        document.getElementById('album-artist').textContent = artist.name;
+        const totalDurationInSeconds = album.tracks.reduce((total, track) => total + (track.duration || 0), 0);
+        document.getElementById('album-stats').textContent = `${album.tracks.length} songs, ${formatDuration(totalDurationInSeconds)}`;
+        const playlistContainer = document.getElementById('album-playlist-container');
+        playlistContainer.innerHTML = '';
+        currentPlaylist = album.tracks.map((track, i) => ({ ...track, albumName: album.name, albumType, albumIndex, trackIndex: i }));
+        originalPlaylist = [...currentPlaylist];
+        currentPlaylist.forEach((track) => {
+            playlistContainer.innerHTML += `
+                <div class="track-item" data-file-path="${track.file}">
+                    <div class="track-number">
+                        <span class="track-number-text">${track.num || '—'}</span>
+                        <div class="track-number-play"></div>
+                        <div class="track-number-equalizer"><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>
+                    </div>
+                    <div class="track-item-info"><div class="track-item-title">${track.title}</div></div>
+                    <span class="track-item-duration">${track.duration ? formatTime(track.duration) : '—:—'}</span>
+                    <button class="share-btn" title="Share Track"><svg viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3s3-1.34 3-3-1.34-3-3-3z"></path></svg></button>
+                </div>`;
+        });
+        const otherReleasesCarousel = document.getElementById('other-releases-carousel');
+        const otherReleasesSection = document.querySelector('.other-releases-section');
+        otherReleasesCarousel.innerHTML = '';
+        const allReleases = [];
+        ['albums', 'eps', 'demos'].forEach(type => {
+            (artist[type] || []).forEach((release, index) => {
+                allReleases.push({ ...release, originalType: type, originalIndex: index });
+            });
+        });
+        const otherReleases = allReleases.filter(release => !(release.originalType === albumType && release.originalIndex === albumIndex));
+        if (otherReleases.length > 0) {
+            otherReleasesSection.style.display = 'block';
+            otherReleases.forEach(release => {
+                otherReleasesCarousel.innerHTML += `<div class="album-card" data-album-type="${release.originalType}" data-album-index="${release.originalIndex}"><img src="${release.cover || 'images/default_cover.jpg'}" alt="${release.name}"><p>${release.name}</p></div>`;
+            });
+        } else {
+            otherReleasesSection.style.display = 'none';
+        }
+        updatePlayerUI();
+    };
+    
+    const renderOtherArtistsSection = (currentArtistId) => {
+        const container = document.getElementById('other-artists-container');
+        if (!container) return;
+        container.innerHTML = '';
+        Object.keys(window.artistData).forEach(id => {
+            if (id !== currentArtistId) {
+                const otherArtist = window.artistData[id];
+                container.innerHTML += `<a href="artist.html?artist=${id}" class="artist-choice-card"><img src="${otherArtist.image}" alt="Аватар ${otherArtist.name}"><h2>${otherArtist.name}</h2></a>`;
+            }
+        });
+    };
+
+    const switchTab = (tabType) => {
+        if (!tabType) return;
+        ['albums', 'eps', 'demos'].forEach(type => {
+            document.getElementById(`${type}-tab-btn`).classList.toggle('active', type === tabType);
+            document.getElementById(`${type}-pane`).classList.toggle('active', type === tabType);
+        });
+    };
+
+    const handleNavigation = () => {
+        const params = new URLSearchParams(window.location.search);
+        artistId = params.get('artist');
+        artist = window.artistData[artistId];
+        if (!artist) { document.body.innerHTML = '<h1>Artist Not Found</h1>'; return; }
+        const albumType = params.get('albumType');
+        const albumIndex = params.get('album');
+        if (albumType && albumIndex && artist[albumType] && artist[albumType][parseInt(albumIndex)]) {
+            document.title = `${artist.name} - ${artist[albumType][parseInt(albumIndex)].name} | kr4.pro`;
+            renderAlbumPage(albumType, parseInt(albumIndex));
+            showPage('album');
+            const trackIndex = params.get('track');
+            if (trackIndex) {
+                loadAndPlay(currentPlaylist.find(t => t.trackIndex == trackIndex));
+            }
+        } else {
+            document.title = `${artist.name} | kr4.pro`;
+            renderArtistPage();
+            showPage('artist');
+        }
+        renderOtherArtistsSection(artistId);
+        updatePlayerUI();
+    };
+
+    // --- Event Listeners Setup ---
+    audio.onplay = () => { isPlaying = true; playPauseBtn.textContent = '⏸'; updatePlayerUI(); };
+    audio.onpause = () => { isPlaying = false; playPauseBtn.textContent = '▶'; updatePlayerUI(); };
     
     audio.ontimeupdate = () => {
         if (audio.duration) {
             progressBar.value = (audio.currentTime / audio.duration) * 100 || 0;
             currentTimeEl.textContent = formatTime(audio.currentTime);
         }
-        // ✅ МОДИФИЦИРОВАНО: Логика ключевого события '30s_listen'
+        // Логика подсчета прослушиваний
         if (!listenCounted && audio.currentTime >= 30) {
-            listenCounted = true; // Считаем только один раз за трек
-            logPlayerEvent('30s_listen');
+            listenCounted = true; // Считаем только один раз
+            if (currentTrackData && currentTrackData.file) {
+                logListen(currentTrackData.file);
+            }
         }
     };
 
     audio.onloadedmetadata = () => { if(audio.duration) durationEl.textContent = formatTime(audio.duration); };
     
     audio.onended = () => {
-        logPlayerEvent('track_completed'); // Трек дослушан до конца
         const currentIndex = findTrackInPlaylist(currentTrackData);
         if (currentIndex !== -1 && currentIndex < currentPlaylist.length - 1) {
             loadAndPlay(currentPlaylist[currentIndex + 1]);
@@ -265,7 +393,6 @@ document.addEventListener('DOMContentLoaded', () => {
     nextBtn.onclick = () => { const currentIndex = findTrackInPlaylist(currentTrackData); if (currentIndex !== -1 && currentIndex < currentPlaylist.length - 1) { loadAndPlay(currentPlaylist[currentIndex + 1]); } };
     progressBar.oninput = (e) => { if (audio.duration) audio.currentTime = (e.target.value / 100) * audio.duration; };
     if (seeDiscographyBtn) { seeDiscographyBtn.onclick = () => document.getElementById('all-tracks-section').scrollIntoView({ behavior: 'smooth' }); }
-
 
     if (headerRandomBtn) {
         headerRandomBtn.addEventListener('click', () => {
