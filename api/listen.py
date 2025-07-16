@@ -26,8 +26,8 @@ class handler(BaseHTTPRequestHandler):
             logging.error("REDIS_URL is not set in environment variables.")
             raise ConnectionError("Database configuration is missing.")
         try:
-            # decode_responses=True автоматически преобразует ответы из байтов в строки
-            return from_url(redis_url, decode_responses=True)
+            # Убрана опция decode_responses=True, чтобы избежать конфликтов при записи
+            return from_url(redis_url)
         except RedisError as e:
             logging.error(f"Failed to connect to Redis: {e}")
             raise ConnectionError("Could not connect to the database.") from e
@@ -84,15 +84,13 @@ class handler(BaseHTTPRequestHandler):
             timestamp = datetime.now(timezone.utc).isoformat()
             log_key = f"{timestamp}-{ip_address}"
             
-            # --- КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ ---
-            # Добавляем поле 'timestamp' внутрь JSON-объекта.
             log_payload = json.dumps({
                 'ip': ip_address,
                 'country': country_code,
                 'userAgent': user_agent_string,
                 'trackId': track_id,
                 'eventType': event_type,
-                'timestamp': timestamp # Эта строка исправляет ошибку
+                'timestamp': timestamp
             })
             pipe.hset('v2:diagnostic_logs', log_key, log_payload)
             
@@ -113,4 +111,3 @@ class handler(BaseHTTPRequestHandler):
         except Exception as e:
             logging.exception(f"An unexpected error occurred in listen handler: {e}")
             self._send_error(500, "An internal server error occurred.")
-
