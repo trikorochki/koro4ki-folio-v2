@@ -1,4 +1,4 @@
-# api/listen.py - Единый обработчик аналитики
+# api/listen.py - Единый обработчик аналитики (Финальная исправленная версия)
 import os
 import json
 import logging
@@ -8,7 +8,6 @@ from user_agents import parse
 from datetime import datetime, timezone
 
 # --- Конфигурация логирования ---
-# Настраиваем один раз при загрузке модуля
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
@@ -27,7 +26,8 @@ class handler(BaseHTTPRequestHandler):
             logging.error("REDIS_URL is not set in environment variables.")
             raise ConnectionError("Database configuration is missing.")
         try:
-            return from_url(redis_url)
+            # decode_responses=True автоматически преобразует ответы из байтов в строки
+            return from_url(redis_url, decode_responses=True)
         except RedisError as e:
             logging.error(f"Failed to connect to Redis: {e}")
             raise ConnectionError("Could not connect to the database.") from e
@@ -71,39 +71,38 @@ class handler(BaseHTTPRequestHandler):
 
             # --- 3. Формирование команд для атомарной записи ---
             
-            # 3.1. Основной счетчик прослушиваний (только для ключевого события)
             if event_type == '30s_listen':
                 pipe.hincrby('v2:listen_counts', track_id, 1)
 
-            # 3.2. Общий счетчик всех событий по треку
             pipe.hincrby(f'v2:events:{track_id}', event_type, 1)
 
-            # 3.3. Агрегированная анонимная статистика
             pipe.hincrby('v2:stats:browsers', user_agent.browser.family, 1)
             pipe.hincrby('v2:stats:os', user_agent.os.family, 1)
             pipe.hincrby('v2:stats:devices', 'Mobile' if user_agent.is_mobile else 'Desktop', 1)
             pipe.hincrby('v2:stats:countries', country_code, 1)
             
-            # 3.4. Диагностический лог (заменяет функциональность ping.py)
             timestamp = datetime.now(timezone.utc).isoformat()
             log_key = f"{timestamp}-{ip_address}"
+            
+            # --- КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ ---
+            # Добавляем поле 'timestamp' внутрь JSON-объекта.
             log_payload = json.dumps({
                 'ip': ip_address,
                 'country': country_code,
                 'userAgent': user_agent_string,
                 'trackId': track_id,
-                'eventType': event_type
+                'eventType': event_type,
+                'timestamp': timestamp # Эта строка исправляет ошибку
             })
-            # Используем HSET для сохранения в хеш-таблицу 'v2:diagnostic_logs'
             pipe.hset('v2:diagnostic_logs', log_key, log_payload)
             
-            # --- 4. Выполнение всех команд в одной транзакции ---
+            # --- 4. Выполнение всех команд ---
             pipe.execute()
 
-            logging.info(f"Successfully processed event '{event_type}' for track '{track_id}'.")
+            logging.info(f"Successfully processed event '{eventType}' for track '{track_id}'.")
             
             # --- 5. Отправка успешного ответа ---
-            self._send_response(204) # 204 No Content
+            self._send_response(204)
 
         except json.JSONDecodeError:
             logging.warning("Failed to decode JSON from request body.")
@@ -112,7 +111,6 @@ class handler(BaseHTTPRequestHandler):
             logging.critical(f"Redis connection failed: {e}")
             self._send_error(503, "Service Unavailable: Cannot connect to the database.")
         except Exception as e:
-            # Общий обработчик для непредвиденных ошибок
             logging.exception(f"An unexpected error occurred in listen handler: {e}")
             self._send_error(500, "An internal server error occurred.")
 
