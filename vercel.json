@@ -38,6 +38,7 @@
     {
       "src": "/api/stats",
       "dest": "api/stats.py"
-    }
+    },
+    { "src": "/admin", "dest": "/admin.html" }
   ]
 }
