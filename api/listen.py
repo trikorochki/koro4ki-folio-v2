@@ -3,7 +3,6 @@ import os
 import json
 import logging
 from http.server import BaseHTTPRequestHandler
-from tkinter import EventType
 from redis import from_url, RedisError
 from user_agents import parse
 from datetime import datetime, timezone
@@ -27,7 +26,6 @@ class handler(BaseHTTPRequestHandler):
             logging.error("REDIS_URL is not set in environment variables.")
             raise ConnectionError("Database configuration is missing.")
         try:
-            # Убрана опция decode_responses=True, чтобы избежать конфликтов при записи
             return from_url(redis_url)
         except RedisError as e:
             logging.error(f"Failed to connect to Redis: {e}")
@@ -98,7 +96,7 @@ class handler(BaseHTTPRequestHandler):
             # --- 4. Выполнение всех команд ---
             pipe.execute()
 
-            logging.info(f"Successfully processed event '{EventType}' for track '{track_id}'.")
+            logging.info(f"Successfully processed event '{eventType}' for track '{track_id}'.")
             
             # --- 5. Отправка успешного ответа ---
             self._send_response(204)
