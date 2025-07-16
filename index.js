@@ -14,33 +14,45 @@ document.addEventListener('DOMContentLoaded', () => {
     const durationEl = document.getElementById('duration');
     const currentTrackTitleEl = document.getElementById('current-track-title');
 
+    // --- Переменные состояния ---
     let allTracks = [];
     let currentTrackIndex = 0;
     let isPlaying = false;
+    let listenCounted = false; // ✅ ДОБАВЛЕНО: Флаг для отслеживания аналитики
 
     // --- Функции для обновления состояния кнопок ---
-    const updateHeaderButtonState = () => {
-        if (isPlaying) {
-            playRandomBtn.classList.add('playing');
-        } else {
-            playRandomBtn.classList.remove('playing');
-        }
-    };
-
-    const updateMainPlayerButton = () => {
-        if (isPlaying) {
-            playPauseBtn.textContent = '⏸';
-        } else {
-            playPauseBtn.textContent = '▶';
-        }
-    };
-
+    // Я объединил две ваши функции в одну для чистоты кода
     const updateAllButtons = () => {
-        updateHeaderButtonState();
-        updateMainPlayerButton();
+        playRandomBtn.classList.toggle('playing', isPlaying);
+        playPauseBtn.textContent = isPlaying ? '⏸' : '▶';
     };
 
-    // 1. Сбор и перемешивание всех треков
+    // --- Утилиты ---
+    // ✅ ДОБАВЛЕНО: Функция отправки данных на сервер
+    const logListen = async (trackId) => {
+        try {
+            const response = await fetch('/api/listen', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ trackId }),
+            });
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            console.log(`(Index Page) Счетчик для трека ${trackId} обновлен.`);
+        } catch (error) {
+            console.error('(Index Page) Ошибка при отправке данных аналитики:', error);
+        }
+    };
+    
+    // Ваша утилита для форматирования времени. Она остается на месте.
+    const formatTime = (s) => { 
+        const m = Math.floor(s / 60); 
+        const sec = Math.floor(s % 60); 
+        return `${m}:${sec < 10 ? '0' : ''}${sec}`;
+    };
+
+    // 1. Сбор и перемешивание всех треков (без изменений)
     if (typeof window.artistData !== 'undefined') {
         Object.values(window.artistData).forEach(artist => {
             ['albums', 'eps', 'demos'].forEach(type => {
@@ -57,6 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 2. Функции управления плеером
     const loadTrack = (index) => {
         if (index >= 0 && index < allTracks.length) {
+            listenCounted = false; // ✅ ИЗМЕНЕНО: Сбрасываем флаг для нового трека
             currentTrackIndex = index;
             const track = allTracks[index];
             audio.src = track.file;
@@ -93,28 +106,23 @@ document.addEventListener('DOMContentLoaded', () => {
         play(); 
     };
 
-    // 3. Обработчики событий для кнопки в шапке
+    // 3. Обработчики событий для кнопки в шапке (без изменений)
     playRandomBtn.addEventListener('click', () => {
         if (allTracks.length > 0) {
             if (isPlaying) {
-                // Если играет - ставим на паузу
                 pause();
             } else {
-                // Если не играет - начинаем воспроизведение
                 playerFooter.classList.add('visible');
                 document.body.classList.add('body-with-player');
-                
-                // Если трек не загружен, загружаем первый
                 if (!audio.src || audio.src === '') {
                     loadTrack(0);
                 }
-                
                 play();
             }
         }
     });
 
-    // 4. Обработчики событий для основных кнопок плеера
+    // 4. Обработчики событий для основных кнопок плеера (без изменений)
     playPauseBtn.addEventListener('click', playPauseToggle);
     nextBtn.addEventListener('click', playNext);
     prevBtn.addEventListener('click', playPrev);
@@ -140,27 +148,30 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // ✅ ИЗМЕНЕНО: Добавлена логика аналитики в обработчик timeupdate
     audio.addEventListener('timeupdate', () => {
         if (audio.duration) {
             progressBar.value = (audio.currentTime / audio.duration) * 100 || 0;
             currentTimeEl.textContent = formatTime(audio.currentTime);
         }
+        
+        // Логика подсчета прослушиваний
+        if (!listenCounted && audio.currentTime >= 30) {
+            listenCounted = true; // Считаем только один раз
+            const currentTrack = allTracks[currentTrackIndex];
+            if (currentTrack && currentTrack.file) {
+                logListen(currentTrack.file);
+            }
+        }
     });
 
-    // 6. Обработчик для прогресс-бара
+    // 6. Обработчик для прогресс-бара (без изменений)
     progressBar.addEventListener('input', (e) => {
         if (audio.duration) {
             audio.currentTime = (e.target.value / 100) * audio.duration;
         }
     });
 
-    // 7. Утилита для форматирования времени
-    const formatTime = (s) => { 
-        const m = Math.floor(s / 60); 
-        const sec = Math.floor(s % 60); 
-        return `${m}:${sec < 10 ? '0' : ''}${sec}`;
-    };
-
-    // 8. Инициализация состояния кнопок
+    // 7. Инициализация состояния кнопок
     updateAllButtons();
 });
