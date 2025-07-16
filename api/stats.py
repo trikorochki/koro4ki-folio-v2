@@ -1,4 +1,4 @@
-# api/stats.py - Единый, оптимизированный эндпоинт для всей статистики
+# api/stats.py - ВРЕМЕННАЯ ОТЛАДОЧНАЯ ВЕРСИЯ
 import os
 import json
 import logging
@@ -16,9 +16,7 @@ logging.basicConfig(
 
 class handler(BaseHTTPRequestHandler):
     """
-    Предоставляет комплексную статистику по прослушиваниям, аудитории
-    и диагностические логи через защищенный API.
-    Оптимизирован для минимизации запросов к базе данных.
+    Предоставляет комплексную статистику. Временно модифицирован для отладки.
     """
 
     def _authorize(self):
@@ -41,7 +39,7 @@ class handler(BaseHTTPRequestHandler):
         redis_url = os.environ.get("REDIS_URL")
         if not redis_url:
             raise ConnectionError("Database configuration is missing.")
-        return from_url(redis_url, decode_responses=True) # Важное добавление для авто-декодирования
+        return from_url(redis_url, decode_responses=True)
 
     def _send_response(self, status_code, content_type='application/json; charset=utf-8', body=None):
         """Отправляет HTTP-ответ."""
@@ -58,7 +56,7 @@ class handler(BaseHTTPRequestHandler):
 
     def _fetch_all_data(self, redis_client):
         """
-        Извлекает всю необходимую статистику из Redis за минимальное число запросов.
+        Извлекает всю необходимую статистику из Redis.
         """
         pipe = redis_client.pipeline()
         
@@ -76,20 +74,17 @@ class handler(BaseHTTPRequestHandler):
         
         results = pipe.execute()
         
-        # --- КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ ЗДЕСЬ ---
-        # Безопасно обрабатываем диагностические логи, отбрасывая записи без 'timestamp'
+        # Безопасно обрабатываем диагностические логи
         raw_logs = results[5]
         diagnostic_logs = []
         for log_json in raw_logs.values():
             try:
                 record = json.loads(log_json)
-                if 'timestamp' in record: # Проверяем наличие ключа
+                if 'timestamp' in record:
                     diagnostic_logs.append(record)
             except (json.JSONDecodeError, TypeError):
-                # Игнорируем записи, которые не являются валидным JSON
                 continue
         
-        # Сортируем только валидные, отфильтрованные записи
         sorted_logs = sorted(diagnostic_logs, key=lambda x: x['timestamp'], reverse=True)
 
         data = {
@@ -98,7 +93,12 @@ class handler(BaseHTTPRequestHandler):
             'os': {k: int(v) for k, v in results[2].items()},
             'devices': {k: int(v) for k, v in results[3].items()},
             'countries': {k: int(v) for k, v in results[4].items()},
-            'diagnostic_logs': sorted_logs
+            'diagnostic_logs': sorted_logs,
+            # --- ОТЛАДОЧНАЯ СЕКЦИЯ ---
+            '_debug_info': {
+                'raw_listen_count_keys': list(results[0].keys()),
+                'raw_diagnostic_logs': list(raw_logs.values())[:5] # Первые 5 логов для анализа
+            }
         }
         
         event_data = {}
@@ -116,11 +116,12 @@ class handler(BaseHTTPRequestHandler):
 
         for full_url, plays in listen_counts.items():
             try:
-                path = urlparse(full_url).path.lstrip('/')
+                # ВАЖНО: Используем lstrip, чтобы убрать возможный / в начале
+                path = urlparse(full_url).path.lstrip('/') 
                 parts = path.split('/')
 
                 if len(parts) != 4 or parts[0] != 'music':
-                    logging.warning(f"Skipping malformed track URL: {full_url}")
+                    logging.warning(f"Skipping malformed track URL: '{full_url}' | Parts: {parts}")
                     continue
 
                 artist_name, album_raw, track_file = parts[1], parts[2], parts[3]
@@ -165,15 +166,13 @@ class handler(BaseHTTPRequestHandler):
                     'devices': all_data['devices'],
                     'countries': all_data['countries'],
                 },
-                'diagnostic_logs': all_data['diagnostic_logs']
+                'diagnostic_logs': all_data['diagnostic_logs'],
+                '_debug_info': all_data.get('_debug_info', {}) # Добавляем отладочную инфу
             }
             
             response_body = json.dumps(final_response, indent=2, ensure_ascii=False).encode('utf-8')
             self._send_response(200, body=response_body)
 
-        except ConnectionError as e:
-            logging.critical(f"Redis connection failed: {e}")
-            self._send_error(503, "Service Unavailable: Cannot connect to the database.")
         except Exception as e:
             logging.exception(f"An unexpected error occurred in stats handler: {e}")
             self._send_error(500, "An internal server error occurred.")
