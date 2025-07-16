@@ -24,12 +24,20 @@
     {
       "src": "favicon.ico",
       "use": "@vercel/static"
+    },
+    {
+      "src": "api/stats.py",
+      "use": "@vercel/python"
     }
   ],
   "routes": [
     {
       "src": "/api/listen",
       "dest": "api/listen.py"
+    },
+    {
+      "src": "/api/stats",
+      "dest": "api/stats.py"
     }
   ]
 }
