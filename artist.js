@@ -70,7 +70,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 albumPage: getById('album-page'),
                 allTracksShuffleBtn: getById('all-tracks-shuffle-btn'),
                 albumShuffleBtn: getById('album-shuffle-btn'),
-                // Добавляем остальные элементы, с которыми будем работать
+                // Добавляем кнопки Play
+                allTracksPlayBtn: getById('all-tracks-play-btn'),
+                albumPlayBtn: getById('album-play-btn'),
+                // Добавляем остальные элементы
                 artistAvatar: getById('artist-avatar'),
                 artistName: getById('artist-name'),
                 artistDesc1: getById('artist-description-line1'),
@@ -102,6 +105,56 @@ document.addEventListener('DOMContentLoaded', () => {
 
             this.dom.allTracksShuffleBtn.addEventListener('click', () => this.toggleShuffle('all-tracks'));
             this.dom.albumShuffleBtn.addEventListener('click', () => this.toggleShuffle('album'));
+
+            // ИСПРАВЛЕНИЕ: Добавляем обработчики для кнопок Play
+            if (this.dom.allTracksPlayBtn) {
+                this.dom.allTracksPlayBtn.addEventListener('click', () => this.handleAllTracksPlay());
+            }
+            if (this.dom.albumPlayBtn) {
+                this.dom.albumPlayBtn.addEventListener('click', () => this.handleAlbumPlay());
+            }
+        },
+
+        // ИСПРАВЛЕНИЕ: Добавляем методы для обработки кнопок Play
+        handleAllTracksPlay() {
+            if (this.state.currentPlaylistSource === 'all-tracks' && this.player.isPlaying) {
+                this.player.pause();
+            } else if (this.state.currentPlaylistSource === 'all-tracks' && !this.player.isPlaying) {
+                this.player.play();
+            } else {
+                this.state.currentPlaylistSource = 'all-tracks';
+                this.state.currentPlaylist = [...this.state.allArtistTracks];
+                this.state.originalPlaylist = [...this.state.allArtistTracks];
+                if (this.state.isShuffleOn) {
+                    this.state.currentPlaylist = this.shuffleArray(this.state.currentPlaylist);
+                }
+                this.player.load(this.state.currentPlaylist[0]);
+                this.player.play();
+            }
+        },
+
+        handleAlbumPlay() {
+            if (this.state.currentPlaylistSource === 'album' && this.player.isPlaying) {
+                this.player.pause();
+            } else if (this.state.currentPlaylistSource === 'album' && !this.player.isPlaying) {
+                this.player.play();
+            } else {
+                this.state.currentPlaylistSource = 'album';
+                const albumTracks = this.state.currentAlbum.tracks.map((track, i) => ({
+                    ...track,
+                    albumName: this.state.currentAlbum.name,
+                    albumType: this.state.currentAlbum.type,
+                    albumIndex: this.state.currentAlbum.index,
+                    trackIndex: i
+                }));
+                this.state.currentPlaylist = [...albumTracks];
+                this.state.originalPlaylist = [...albumTracks];
+                if (this.state.isShuffleOn) {
+                    this.state.currentPlaylist = this.shuffleArray(this.state.currentPlaylist);
+                }
+                this.player.load(this.state.currentPlaylist[0]);
+                this.player.play();
+            }
         },
         
         /**
@@ -121,6 +174,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const albumType = params.get('albumType');
             const albumIndex = params.get('album');
+            const trackIndex = params.get('track');
 
             if (albumType && albumIndex !== null && this.state.artist[albumType]?.[parseInt(albumIndex, 10)]) {
                 const idx = parseInt(albumIndex, 10);
@@ -128,6 +182,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.renderAlbumPage(albumType, idx);
                 this.showPage('album');
                 document.title = `${this.state.artist.name} - ${this.state.currentAlbum.name} | kr4.pro`;
+                
+                // Если указан конкретный трек, запускаем его
+                if (trackIndex !== null && trackIndex !== 'undefined') {
+                    const trackIdx = parseInt(trackIndex, 10);
+                    if (trackIdx >= 0 && trackIdx < this.state.currentAlbum.tracks.length) {
+                        const track = {
+                            ...this.state.currentAlbum.tracks[trackIdx],
+                            albumName: this.state.currentAlbum.name,
+                            albumType: this.state.currentAlbum.type,
+                            albumIndex: this.state.currentAlbum.index,
+                            trackIndex: trackIdx
+                        };
+                        this.setPlaylist('album', track);
+                    }
+                }
             } else {
                 this.renderArtistPage();
                 this.showPage('artist');
@@ -306,6 +375,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
             this.dom.playPauseBtn.textContent = isPlaying ? '⏸' : '▶';
 
+            // Обновляем состояние кнопок Play
+            document.querySelectorAll('.play-action-btn .play-circle').forEach(btn => {
+                btn.classList.remove('playing');
+            });
+
+            if (isPlaying) {
+                if (this.state.currentPlaylistSource === 'all-tracks') {
+                    this.dom.allTracksPlayBtn?.querySelector('.play-circle')?.classList.add('playing');
+                } else if (this.state.currentPlaylistSource === 'album') {
+                    this.dom.albumPlayBtn?.querySelector('.play-circle')?.classList.add('playing');
+                }
+            }
+
             document.querySelectorAll('.track-item').forEach(item => {
                 const isActive = item.dataset.filePath === currentFile;
                 item.classList.toggle('active', isActive);
@@ -443,6 +525,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const item = document.createElement('div');
             item.className = 'track-item';
             item.dataset.filePath = track.file;
+            
+            // ИСПРАВЛЕНИЕ: Убеждаемся, что trackIndex всегда определен
+            if (showAlbumName && track.trackIndex === undefined) {
+                // Для треков из "All Tracks" ищем trackIndex
+                const albumTracks = this.state.artist[track.albumType][track.albumIndex].tracks;
+                track.trackIndex = albumTracks.findIndex(t => t.file === track.file);
+            }
 
             item.innerHTML = `
                 <div class="track-number">
@@ -467,8 +556,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 const trackItem = shareBtn.closest('.track-item');
                 if (trackItem) {
                     const trackData = this.state.allArtistTracks.find(t => t.file === trackItem.dataset.filePath);
-                    const shareUrl = `${location.origin}${location.pathname}?artist=${this.state.artistId}&albumType=${trackData.albumType}&album=${trackData.albumIndex}&track=${trackData.trackIndex}`;
-                    this.handleShareClick(shareUrl, shareBtn);
+                    // ИСПРАВЛЕНИЕ: Убеждаемся, что trackIndex определен
+                    if (trackData && trackData.trackIndex !== undefined) {
+                        const shareUrl = `${location.origin}${location.pathname}?artist=${this.state.artistId}&albumType=${trackData.albumType}&album=${trackData.albumIndex}&track=${trackData.trackIndex}`;
+                        this.handleShareClick(shareUrl, shareBtn);
+                    }
                 }
                 return;
             }
@@ -510,8 +602,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 const trackItem = shareBtn.closest('.track-item');
                 if (trackItem) {
                     const trackData = this.state.currentAlbum.tracks.find(t => t.file === trackItem.dataset.filePath);
-                    const shareUrl = `${location.origin}${location.pathname}?artist=${this.state.artistId}&albumType=${this.state.currentAlbum.type}&album=${this.state.currentAlbum.index}&track=${trackData.trackIndex}`;
-                    this.handleShareClick(shareUrl, shareBtn);
+                    if (trackData) {
+                        // ИСПРАВЛЕНИЕ: Правильно определяем trackIndex
+                        const trackIndex = this.state.currentAlbum.tracks.findIndex(t => t.file === trackItem.dataset.filePath);
+                        const shareUrl = `${location.origin}${location.pathname}?artist=${this.state.artistId}&albumType=${this.state.currentAlbum.type}&album=${this.state.currentAlbum.index}&track=${trackIndex}`;
+                        this.handleShareClick(shareUrl, shareBtn);
+                    }
                 }
                 return;
             }
@@ -526,7 +622,14 @@ document.addEventListener('DOMContentLoaded', () => {
             if (trackItem) {
                 const trackData = this.state.currentAlbum.tracks.find(t => t.file === trackItem.dataset.filePath);
                 if (trackData) {
-                    const fullTrackData = { ...trackData, albumName: this.state.currentAlbum.name, albumType: this.state.currentAlbum.type, albumIndex: this.state.currentAlbum.index };
+                    const trackIndex = this.state.currentAlbum.tracks.findIndex(t => t.file === trackItem.dataset.filePath);
+                    const fullTrackData = { 
+                        ...trackData, 
+                        albumName: this.state.currentAlbum.name, 
+                        albumType: this.state.currentAlbum.type, 
+                        albumIndex: this.state.currentAlbum.index,
+                        trackIndex: trackIndex
+                    };
                     this.handleTrackClick(fullTrackData, 'album');
                 }
                 return;
