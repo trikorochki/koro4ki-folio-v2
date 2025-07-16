@@ -73,12 +73,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Добавляем кнопки Play
                 allTracksPlayBtn: getById('all-tracks-play-btn'),
                 albumPlayBtn: getById('album-play-btn'),
+                // НОВОЕ: Добавляем кнопку Discography
+                discographyBtn: getById('see-discography-btn'),
                 // Добавляем остальные элементы
                 artistAvatar: getById('artist-avatar'),
                 artistName: getById('artist-name'),
                 artistDesc1: getById('artist-description-line1'),
                 artistDesc2: getById('artist-description-line2'),
                 allTracksSection: getById('all-tracks-section'),
+                discographySection: getById('discography-section'),
                 albumCover: getById('album-cover'),
                 albumTitle: getById('album-title'),
                 albumArtist: getById('album-artist'),
@@ -106,16 +109,31 @@ document.addEventListener('DOMContentLoaded', () => {
             this.dom.allTracksShuffleBtn.addEventListener('click', () => this.toggleShuffle('all-tracks'));
             this.dom.albumShuffleBtn.addEventListener('click', () => this.toggleShuffle('album'));
 
-            // ИСПРАВЛЕНИЕ: Добавляем обработчики для кнопок Play
+            // Добавляем обработчики для кнопок Play
             if (this.dom.allTracksPlayBtn) {
                 this.dom.allTracksPlayBtn.addEventListener('click', () => this.handleAllTracksPlay());
             }
             if (this.dom.albumPlayBtn) {
                 this.dom.albumPlayBtn.addEventListener('click', () => this.handleAlbumPlay());
             }
+
+            // НОВОЕ: Добавляем обработчик для кнопки Discography
+            if (this.dom.discographyBtn) {
+                this.dom.discographyBtn.addEventListener('click', () => this.scrollToDiscography());
+            }
         },
 
-        // ИСПРАВЛЕНИЕ: Добавляем методы для обработки кнопок Play
+        // НОВОЕ: Метод для прокрутки к секции Discography
+        scrollToDiscography() {
+            if (this.dom.discographySection) {
+                this.dom.discographySection.scrollIntoView({ 
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        },
+
+        // Добавляем методы для обработки кнопок Play
         handleAllTracksPlay() {
             if (this.state.currentPlaylistSource === 'all-tracks' && this.player.isPlaying) {
                 this.player.pause();
@@ -166,7 +184,7 @@ document.addEventListener('DOMContentLoaded', () => {
             this.state.artist = window.artistData[this.state.artistId];
 
             if (!this.state.artist) {
-                document.body.innerHTML = '<h1>Артист не найден</h1>';
+                document.body.innerHTML = '<h1>No such artist</h1>';
                 return;
             }
             
@@ -442,7 +460,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     showHideBtn.className = 'show-hide-btn';
                     this.dom.allTracksSection.appendChild(showHideBtn);
                 }
-                showHideBtn.textContent = this.state.showingAllTracks ? 'Свернуть' : 'Показать все';
+                showHideBtn.textContent = this.state.showingAllTracks ? 'HIDE ALL TRACKS' : 'SHOW ALL TRACKS';
                 showHideBtn.style.display = 'block';
             } else if (showHideBtn) {
                 showHideBtn.style.display = 'none';
@@ -526,7 +544,7 @@ document.addEventListener('DOMContentLoaded', () => {
             item.className = 'track-item';
             item.dataset.filePath = track.file;
             
-            // ИСПРАВЛЕНИЕ: Убеждаемся, что trackIndex всегда определен
+            // Убеждаемся, что trackIndex всегда определен
             if (showAlbumName && track.trackIndex === undefined) {
                 // Для треков из "All Tracks" ищем trackIndex
                 const albumTracks = this.state.artist[track.albumType][track.albumIndex].tracks;
@@ -556,7 +574,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 const trackItem = shareBtn.closest('.track-item');
                 if (trackItem) {
                     const trackData = this.state.allArtistTracks.find(t => t.file === trackItem.dataset.filePath);
-                    // ИСПРАВЛЕНИЕ: Убеждаемся, что trackIndex определен
                     if (trackData && trackData.trackIndex !== undefined) {
                         const shareUrl = `${location.origin}${location.pathname}?artist=${this.state.artistId}&albumType=${trackData.albumType}&album=${trackData.albumIndex}&track=${trackData.trackIndex}`;
                         this.handleShareClick(shareUrl, shareBtn);
@@ -603,7 +620,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (trackItem) {
                     const trackData = this.state.currentAlbum.tracks.find(t => t.file === trackItem.dataset.filePath);
                     if (trackData) {
-                        // ИСПРАВЛЕНИЕ: Правильно определяем trackIndex
                         const trackIndex = this.state.currentAlbum.tracks.findIndex(t => t.file === trackItem.dataset.filePath);
                         const shareUrl = `${location.origin}${location.pathname}?artist=${this.state.artistId}&albumType=${this.state.currentAlbum.type}&album=${this.state.currentAlbum.index}&track=${trackIndex}`;
                         this.handleShareClick(shareUrl, shareBtn);

@@ -36,8 +36,13 @@
                     <p id="artist-description-line1"></p>
                     <p id="artist-description-line2"></p>
                     <div class="artist-links">
-                        <a href="index.html" class="back-link">&larr; Back to worlds</a>
-                        <button class="scroll-to-discography-btn" id="see-discography-btn">Discography &darr;</button>
+                        <!-- ИЗМЕНЕНИЕ: Заменяем "Back to worlds" на зеленую кнопку "Discography" -->
+                        <button class="discography-btn" id="see-discography-btn">
+                            <span>Discography</span>
+                            <svg viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M7 10l5 5 5-5z"/>
+                            </svg>
+                        </button>
                     </div>
                 </div>
             </header>
@@ -47,7 +52,6 @@
             <section class="random-section" id="all-tracks-section">
                 <header class="random-header">
                     <h3>All Tracks</h3>
-                    <!-- ✅ ИЗМЕНЕНО: Классы кнопок унифицированы -->
                     <div class="random-header-buttons">
                         <button id="all-tracks-play-btn" class="play-action-btn" title="Play">
                             <div class="play-circle">
@@ -98,7 +102,6 @@
                 </div>
             </header>
             <div class="section-divider"></div>
-            <!-- ✅ ИЗМЕНЕНО: Классы и ID кнопок унифицированы -->
             <section class="album-controls-section">
                  <button class="play-action-btn" id="album-play-btn">
                     <div class="play-circle">
