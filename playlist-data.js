@@ -203,7 +203,7 @@ window.artistData = {
                         "title": "Wake up!",
                         "originalTitle": "01 Wake up!",
                         "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nükorochki/Album. Grenzgänger/01 Wake up!.mp3",
-                        "duration": 116
+                        "duration": 196
                     },
                     {
                         "num": 2,
