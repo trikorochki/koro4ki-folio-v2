@@ -190,7 +190,7 @@ window.artistData = {
     },
     "nükorochki": {
         "name": "NÜKORO4KI",
-        "image": "images/nükorochki.jpg",
+        "image": "images/nukorochki.jpg",
         "description_line1": "Experimental metal with no fucking frames.",
         "description_line2": "From quantum leaps to night machines of sound.",
         "albums": [
