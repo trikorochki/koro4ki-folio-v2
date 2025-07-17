@@ -188,6 +188,148 @@ window.artistData = {
         ],
         "demos": []
     },
+    "nükorochki": {
+        "name": "NÜKORO4KI",
+        "image": "images/nükorochki.jpg",
+        "description_line1": "Experimental metal with no fucking frames.",
+        "description_line2": "From quantum leaps to night machines of sound.",
+        "albums": [
+            {
+                "name": "Grenzgänger",
+                "cover": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nükorochki/Album. Grenzgänger/cover.jpg",
+                "tracks": [
+                    {
+                        "num": 1,
+                        "title": "Wake up!",
+                        "originalTitle": "01 Wake up!",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nükorochki/Album. Grenzgänger/01 Wake up!.mp3",
+                        "duration": 196
+                    },
+                    {
+                        "num": 2,
+                        "title": "Nachtmaschine",
+                        "originalTitle": "02 Nachtmaschine",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nükorochki/Album. Grenzgänger/02 Nachtmaschine.mp3",
+                        "duration": 273
+                    },
+                    {
+                        "num": 3,
+                        "title": "Quantenmechanik",
+                        "originalTitle": "03 Quantenmechanik",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nükorochki/Album. Grenzgänger/03 Quantenmechanik.mp3",
+                        "duration": 198
+                    },
+                    {
+                        "num": 4,
+                        "title": "Transformation!",
+                        "originalTitle": "04 Transformation!",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nükorochki/Album. Grenzgänger/04 Transformation!.mp3",
+                        "duration": 196
+                    },
+                    {
+                        "num": 5,
+                        "title": "Stahlträume",
+                        "originalTitle": "05 Stahlträume",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nükorochki/Album. Grenzgänger/05 Stahlträume.mp3",
+                        "duration": 468
+                    },
+                    {
+                        "num": 6,
+                        "title": "Wasteland",
+                        "originalTitle": "06 Wasteland",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nükorochki/Album. Grenzgänger/06 Wasteland.mp3",
+                        "duration": 175
+                    },
+                    {
+                        "num": 7,
+                        "title": "Digitale Rebellion",
+                        "originalTitle": "07 Digitale Rebellion",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nükorochki/Album. Grenzgänger/07 Digitale Rebellion.mp3",
+                        "duration": 141
+                    },
+                    {
+                        "num": 8,
+                        "title": "Megathron",
+                        "originalTitle": "08 Megathron",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nükorochki/Album. Grenzgänger/08 Megathron.mp3",
+                        "duration": 193
+                    },
+                    {
+                        "num": 9,
+                        "title": "Lieber Vlad",
+                        "originalTitle": "09 Lieber Vlad",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nükorochki/Album. Grenzgänger/09 Lieber Vlad.mp3",
+                        "duration": 172
+                    },
+                    {
+                        "num": 10,
+                        "title": "Metamorphose",
+                        "originalTitle": "10 Metamorphose",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nükorochki/Album. Grenzgänger/10 Metamorphose.mp3",
+                        "duration": 183
+                    },
+                    {
+                        "num": 11,
+                        "title": "Grenzgänger",
+                        "originalTitle": "11 Grenzgänger",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nükorochki/Album. Grenzgänger/11 Grenzgänger.mp3",
+                        "duration": 395
+                    }
+                ]
+            }
+        ],
+        "eps": [],
+        "demos": [
+            {
+                "name": "Grenzgänger",
+                "cover": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nükorochki/Demo. Grenzgänger/cover.jpg",
+                "tracks": [
+                    {
+                        "num": 1,
+                        "title": "Grenzgänger (celtic male)",
+                        "originalTitle": "Grenzgänger (celtic male)",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nükorochki/Demo. Grenzgänger/Grenzgänger (celtic male).mp3",
+                        "duration": 250
+                    },
+                    {
+                        "num": 2,
+                        "title": "Grenzgänger (celtic)",
+                        "originalTitle": "Grenzgänger (celtic)",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nükorochki/Demo. Grenzgänger/Grenzgänger (celtic).mp3",
+                        "duration": 223
+                    },
+                    {
+                        "num": 3,
+                        "title": "Nachtmaschine (remix)",
+                        "originalTitle": "Nachtmaschine (remix)",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nükorochki/Demo. Grenzgänger/Nachtmaschine (remix).mp3",
+                        "duration": 190
+                    },
+                    {
+                        "num": 4,
+                        "title": "Stahlträume (metalcore remix)",
+                        "originalTitle": "Stahlträume (metalcore remix)",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nükorochki/Demo. Grenzgänger/Stahlträume (metalcore remix).mp3",
+                        "duration": 377
+                    },
+                    {
+                        "num": 5,
+                        "title": "Transformation! (remix)",
+                        "originalTitle": "Transformation! (remix)",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nükorochki/Demo. Grenzgänger/Transformation! (remix).mp3",
+                        "duration": 151
+                    },
+                    {
+                        "num": 6,
+                        "title": "Wasteland (remix)",
+                        "originalTitle": "Wasteland (remix)",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nükorochki/Demo. Grenzgänger/Wasteland (remix).mp3",
+                        "duration": 196
+                    }
+                ]
+            }
+        ]
+    },
     "psykorochki": {
         "name": "PSYKORO4KI",
         "image": "images/psykorochki.jpg",
