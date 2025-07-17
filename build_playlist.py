@@ -15,7 +15,7 @@ ARTIST_INFO = {
     "riffkorochki": {"name": "RIFFKORO4KI", "image": "images/riffkorochki.jpg", "description_line1": "The blend of experimental hip-hop and riffs.", "description_line2": "A drop of common sense for your soul."},
     "trapkorochki": {"name": "TRAPKORO4KI", "image": "images/trapkorochki.jpg", "description_line1": "A fusion of noir trap and digital decadence.", "description_line2": "The architecture of the void for your veins."},
     "streetkorochki": {"name": "STREETKORO4KI", "image": "images/streetkorochki.jpg", "description_line1": "Satirical rap dismantling social pretenses.", "description_line2": "Fast-paced trap-drill with polyrhythmic chaos."},
-    "nükorochki": {"name": "NÜKORO4KI", "image": "images/nükorochki.jpg", "description_line1": "Experimental metal with no fucking frames.", "description_line2": "From quantum leaps to night machines of sound."}
+    "nükorochki": {"name": "NÜKORO4KI", "image": "images/nukorochki.jpg", "description_line1": "Experimental metal with no fucking frames.", "description_line2": "From quantum leaps to night machines of sound."}
 }
 
 MUSIC_DIR = 'music'
