@@ -10,7 +10,6 @@
     --player-height: 90px;
     --header-height: 80px;
 }
-
 body {
     background-color: var(--bg-color);
     color: var(--primary-text-color);
