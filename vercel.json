@@ -1,26 +1,41 @@
 {
   "version": 2,
   "builds": [
-    {
-      "src": "admin-nextjs/package.json",
-      "use": "@vercel/next",
-      "config": {
-        "distDir": ".next"
-      }
-    },
+
     {
       "src": "package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "."
-      }
+      "use": "@vercel/next"
+    },
+
+    {
+      "src": "api/listen.py",
+      "use": "@vercel/python"
+    },
+    {
+      "src": "api/stats.py",
+      "use": "@vercel/python"
     }
   ],
   "routes": [
+
+    {
+      "src": "/admin((?!/api).*)",
+      "dest": "/admin"
+    },
+    {
+      "src": "/api/admin/(.*)",
+      "dest": "/api/admin/$1"
+    },
+
     {
       "src": "/api/listen",
       "dest": "/api/listen.py"
     },
+    {
+      "src": "/api/stats",
+      "dest": "/api/stats.py"
+    },
+
     {
       "src": "/(.*)",
       "dest": "/$1"
