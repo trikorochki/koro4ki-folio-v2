@@ -1,44 +1,21 @@
 {
   "version": 2,
   "builds": [
-    {
-      "src": "api/listen.py",
-      "use": "@vercel/python"
-    },
-    {
-      "src": "*.html",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "style.css",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "*.js",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "images/**",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "favicon.ico",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "api/stats.py",
-      "use": "@vercel/python"
-    }
+    { "src": "package.json", "use": "@vercel/next" },
+    { "src": "api/listen.py", "use": "@vercel/python" },
+    { "src": "api/stats.py", "use": "@vercel/python" }
   ],
   "routes": [
+    { "src": "/api/listen", "dest": "/api/listen.py" },
+    { "src": "/api/stats", "dest": "/api/stats.py" },
     {
-      "src": "/api/listen",
-      "dest": "api/listen.py"
+      "src": "^/$",
+      "dest": "/index.html",
+      "status": 200
     },
     {
-      "src": "/api/stats",
-      "dest": "api/stats.py"
-    },
-    { "src": "/admin", "dest": "/admin.html" }
+      "src": "/(.*\\.(css|js|ico|png|jpg|svg|mp3|woff2))$",
+      "dest": "/$1"
+    }
   ]
 }
