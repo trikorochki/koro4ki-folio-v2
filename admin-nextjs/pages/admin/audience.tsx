@@ -46,8 +46,14 @@ export default function AudiencePage() {
         setStats(data)
       }
     } catch (error) {
-      console.error('Error loading audience stats:', error)
-    } finally {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Error loading audience stats:', {
+        error: errorMessage,
+        stack: error instanceof Error ? error.stack : undefined,
+        timestamp: new Date().toISOString()
+      });
+    }
+  finally {
       setLoading(false)
     }
   }

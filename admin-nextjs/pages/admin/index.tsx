@@ -53,8 +53,14 @@ export default function AdminDashboard() {
         console.error('Failed to load stats')
       }
     } catch (error) {
-      console.error('Error loading stats:', error)
-    } finally {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Error loading audience stats:', {
+        error: errorMessage,
+        stack: error instanceof Error ? error.stack : undefined,
+        timestamp: new Date().toISOString()
+      });
+    }
+  finally {
       setStatsLoading(false)
     }
   }

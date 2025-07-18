@@ -1,20 +1,23 @@
-export function verifyAuth(authHeader: string | undefined): boolean {
-  if (!authHeader) return false
-  
-  const token = authHeader.replace('Bearer ', '')
-  const expectedToken = process.env.STATS_API_SECRET
-  
-  return token === expectedToken
-}
+import { NextApiHandler, NextApiRequest, NextApiResponse } from "next";
 
-export function withAuth(handler: Function) {
-  return async (req: any, res: any) => {
-    const authHeader = req.headers.authorization
+export function withAuth(handler: NextApiHandler): NextApiHandler {
+  return async (req: NextApiRequest, res: NextApiResponse) => {
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.split(' ')[1];
     
-    if (!verifyAuth(authHeader)) {
-      return res.status(401).json({ error: 'Unauthorized' })
+    if (!token) {
+      return res.status(401).json({ error: 'No token provided' });
     }
     
-    return handler(req, res)
-  }
+    if (token !== process.env.STATS_API_SECRET) {
+      console.warn('Invalid auth attempt:', {
+        ip: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
+        userAgent: req.headers['user-agent'],
+        timestamp: new Date().toISOString()
+      });
+      return res.status(401).json({ error: 'Invalid token' });
+    }
+    
+    return handler(req, res);
+  };
 }

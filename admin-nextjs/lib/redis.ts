@@ -38,7 +38,14 @@ export interface StatsData {
   browsers: Record<string, number>
 }
 
-export async function getGeneralStats(): Promise<StatsData> {
+export interface GeneralStats {
+  totalPlays: number;
+  uniqueListeners: number;
+  totalTracks: number;
+  [key: string]: any;
+}
+
+export async function getGeneralStats(): Promise<GeneralStats> {
   const redis = getRedis()
   
   const [
@@ -82,6 +89,9 @@ export async function getGeneralStats(): Promise<StatsData> {
 
   return {
     totalListens,
+    totalPlays: totalListens,
+    uniqueListeners: Object.keys(listenCounts).length,
+    totalTracks: topTracks.length,
     topTracks,
     countries: Object.fromEntries(Object.entries(countries).map(([k, v]) => [k, parseInt(v)])),
     devices: Object.fromEntries(Object.entries(devices).map(([k, v]) => [k, parseInt(v)])),
