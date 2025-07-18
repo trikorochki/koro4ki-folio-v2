@@ -1,5 +1,3 @@
-// admin-nextjs/next.config.js
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -7,6 +5,8 @@ const nextConfig = {
     REDIS_URL: process.env.REDIS_URL,
     STATS_API_SECRET: process.env.STATS_API_SECRET,
   },
+  
+  // Добавляем эту секцию для автоматических редиректов
   async redirects() {
     return [
       {
