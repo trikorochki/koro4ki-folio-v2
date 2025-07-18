@@ -25,11 +25,5 @@
       "src": "/(.*)",
       "dest": "/$1"
     }
-  ],
-  "env": {
-    "VERCEL_GIT_COMMIT_REF": "@vercel_git_commit_ref"
-  },
-  "scripts": {
-    "build": "if [ \"$VERCEL_GIT_COMMIT_REF\" == \"feature/nextjs-admin-final\" ]; then cd admin-nextjs && npm run build; else exit 0; fi"
-  }
+  ]
 }
