@@ -193,7 +193,70 @@ window.artistData = {
         "image": "images/nukorochki.jpg",
         "description_line1": "Experimental metal with no fucking frames.",
         "description_line2": "From quantum leaps to night machines of sound.",
-        "albums": [],
+        "albums": [
+            {
+                "name": "Grenzgänger",
+                "cover": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nukorochki/Album. Grenzgänger/cover.jpg",
+                "tracks": [
+                    {
+                        "num": 1,
+                        "title": "Systemfehler",
+                        "originalTitle": "01 Systemfehler",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nukorochki/Album. Grenzgänger/01 Systemfehler.mp3",
+                        "duration": 328
+                    },
+                    {
+                        "num": 2,
+                        "title": "Quantenmechanik",
+                        "originalTitle": "02 Quantenmechanik",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nukorochki/Album. Grenzgänger/02 Quantenmechanik.mp3",
+                        "duration": 295
+                    },
+                    {
+                        "num": 3,
+                        "title": "Grüne Lüge",
+                        "originalTitle": "03 Grüne Lüge",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nukorochki/Album. Grenzgänger/03 Grüne Lüge.mp3",
+                        "duration": 198
+                    },
+                    {
+                        "num": 4,
+                        "title": "Betondschungel",
+                        "originalTitle": "04 Betondschungel",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nukorochki/Album. Grenzgänger/04 Betondschungel.mp3",
+                        "duration": 276
+                    },
+                    {
+                        "num": 5,
+                        "title": "Grenzgänger",
+                        "originalTitle": "05 Grenzgänger",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nukorochki/Album. Grenzgänger/05 Grenzgänger.mp3",
+                        "duration": 367
+                    },
+                    {
+                        "num": 6,
+                        "title": "Nightmachine",
+                        "originalTitle": "06 Nightmachine",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nukorochki/Album. Grenzgänger/06 Nightmachine.mp3",
+                        "duration": 480
+                    },
+                    {
+                        "num": 7,
+                        "title": "Von Göttern und Gassen",
+                        "originalTitle": "07 Von Göttern und Gassen",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nukorochki/Album. Grenzgänger/07 Von Göttern und Gassen.mp3",
+                        "duration": 276
+                    },
+                    {
+                        "num": 8,
+                        "title": "Digitale Liebe",
+                        "originalTitle": "08 Digitale Liebe",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nukorochki/Album. Grenzgänger/08 Digitale Liebe.mp3",
+                        "duration": 271
+                    }
+                ]
+            }
+        ],
         "eps": [
             {
                 "name": "Grenzgänger remixes",
