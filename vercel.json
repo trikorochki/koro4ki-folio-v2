@@ -5,19 +5,5 @@
       "src": "admin-nextjs/package.json",
       "use": "@vercel/next"
     }
-  ],
-  "routes": [
-    {
-      "src": "/admin(.*)",
-      "handle": "filesystem"
-    },
-    {
-      "src": "/api/admin/(.*)",
-      "handle": "filesystem"
-    },
-    {
-      "src": "/_next/(.*)",
-      "handle": "filesystem"
-    }
   ]
 }
