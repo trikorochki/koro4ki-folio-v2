@@ -2,4 +2,3 @@ redis
 vercel-blob
 python-dotenv
 mutagen
-user-agents
