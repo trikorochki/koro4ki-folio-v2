@@ -1,21 +1,35 @@
 {
   "version": 2,
   "builds": [
-    { "src": "package.json", "use": "@vercel/next" },
-    { "src": "api/listen.py", "use": "@vercel/python" },
-    { "src": "api/stats.py", "use": "@vercel/python" }
-  ],
-  "routes": [
-    { "src": "/api/listen", "dest": "/api/listen.py" },
-    { "src": "/api/stats", "dest": "/api/stats.py" },
     {
-      "src": "^/$",
-      "dest": "/index.html",
-      "status": 200
+      "src": "admin-nextjs/package.json",
+      "use": "@vercel/next",
+      "config": {
+        "distDir": ".next"
+      }
     },
     {
-      "src": "/(.*\\.(css|js|ico|png|jpg|svg|mp3|woff2))$",
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "."
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/listen",
+      "dest": "/api/listen.py"
+    },
+    {
+      "src": "/(.*)",
       "dest": "/$1"
     }
-  ]
+  ],
+  "env": {
+    "VERCEL_GIT_COMMIT_REF": "@vercel_git_commit_ref"
+  },
+  "scripts": {
+    "build": "if [ \"$VERCEL_GIT_COMMIT_REF\" == \"feature/nextjs-admin-final\" ]; then cd admin-nextjs && npm run build; else exit 0; fi"
+  }
 }
