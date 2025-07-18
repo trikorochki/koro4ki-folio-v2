@@ -161,7 +161,7 @@ if __name__ == '__main__':
     
     # Удалить конкретный альбом
     delete_album(
-        artist_name="nükorochki",
+        artist_name="nukorochki",
         album_name="Album. Grenzgänger"
     )
     

@@ -195,98 +195,203 @@ window.artistData = {
         "description_line2": "From quantum leaps to night machines of sound.",
         "albums": [
             {
-                "name": "Grenzgänger",
-                "cover": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nukorochki/Album. Grenzgänger/cover.jpg",
+                "name": "Grenzgänger",
+                "cover": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nukorochki/Album. Grenzgänger/cover.jpg",
+                "tracks": [
+                    {
+                        "num": 1,
+                        "title": "Systemfehler",
+                        "originalTitle": "01 Systemfehler",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nukorochki/Album. Grenzgänger/01 Systemfehler.mp3",
+                        "duration": 328
+                    },
+                    {
+                        "num": 2,
+                        "title": "Quantenmechanik",
+                        "originalTitle": "02 Quantenmechanik",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nukorochki/Album. Grenzgänger/02 Quantenmechanik.mp3",
+                        "duration": 295
+                    },
+                    {
+                        "num": 3,
+                        "title": "Grüne Lüge",
+                        "originalTitle": "03 Grüne Lüge",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nukorochki/Album. Grenzgänger/03 Grüne Lüge.mp3",
+                        "duration": 198
+                    },
+                    {
+                        "num": 4,
+                        "title": "Betondschungel",
+                        "originalTitle": "04 Betondschungel",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nukorochki/Album. Grenzgänger/04 Betondschungel.mp3",
+                        "duration": 276
+                    },
+                    {
+                        "num": 5,
+                        "title": "Grenzgänger",
+                        "originalTitle": "05 Grenzgänger",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nukorochki/Album. Grenzgänger/05 Grenzgänger.mp3",
+                        "duration": 367
+                    },
+                    {
+                        "num": 6,
+                        "title": "Nightmachine",
+                        "originalTitle": "06 Nightmachine",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nukorochki/Album. Grenzgänger/06 Nightmachine.mp3",
+                        "duration": 480
+                    },
+                    {
+                        "num": 7,
+                        "title": "Von Göttern und Gassen",
+                        "originalTitle": "07 Von Göttern und Gassen",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nukorochki/Album. Grenzgänger/07 Von Göttern und Gassen.mp3",
+                        "duration": 276
+                    },
+                    {
+                        "num": 8,
+                        "title": "Digitale Liebe",
+                        "originalTitle": "08 Digitale Liebe",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nukorochki/Album. Grenzgänger/08 Digitale Liebe.mp3",
+                        "duration": 271
+                    }
+                ]
+            }
+        ],
+        "eps": [
+            {
+                "name": "Grenzgänger remixes",
+                "cover": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nukorochki/EP. Grenzgänger remixes/cover.jpg",
+                "tracks": [
+                    {
+                        "num": 1,
+                        "title": "Grenzgänger",
+                        "originalTitle": "Grenzgänger",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nukorochki/EP. Grenzgänger remixes/Grenzgänger.mp3",
+                        "duration": 344
+                    },
+                    {
+                        "num": 2,
+                        "title": "Grüne Lüge",
+                        "originalTitle": "Grüne Lüge",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nukorochki/EP. Grenzgänger remixes/Grüne Lüge.mp3",
+                        "duration": 229
+                    },
+                    {
+                        "num": 3,
+                        "title": "Nachtmaschine",
+                        "originalTitle": "Nachtmaschine",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nukorochki/EP. Grenzgänger remixes/Nachtmaschine.mp3",
+                        "duration": 273
+                    },
+                    {
+                        "num": 4,
+                        "title": "Von Göttern und Gassen2",
+                        "originalTitle": "Von Göttern und Gassen2",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nukorochki/EP. Grenzgänger remixes/Von Göttern und Gassen2.mp3",
+                        "duration": 259
+                    }
+                ]
+            }
+        ],
+        "demos": [
+            {
+                "name": "Demos",
+                "cover": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nukorochki/Demo. Demos/cover.jpg",
                 "tracks": [
                     {
                         "num": 1,
                         "title": "Wake up!",
                         "originalTitle": "01 Wake up!",
-                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nukorochki/Album. Grenzgänger/01 Wake up!.mp3",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nukorochki/Demo. Demos/01 Wake up!.mp3",
                         "duration": 196
                     },
                     {
                         "num": 2,
-                        "title": "Nachtmaschine",
-                        "originalTitle": "02 Nachtmaschine",
-                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nukorochki/Album. Grenzgänger/02 Nachtmaschine.mp3",
-                        "duration": 273
+                        "title": "Grenzgänger (celtic)",
+                        "originalTitle": "02 Grenzgänger (celtic)",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nukorochki/Demo. Demos/02 Grenzgänger (celtic).mp3",
+                        "duration": 223
                     },
                     {
                         "num": 3,
                         "title": "Quantenmechanik",
                         "originalTitle": "03 Quantenmechanik",
-                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nukorochki/Album. Grenzgänger/03 Quantenmechanik.mp3",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nukorochki/Demo. Demos/03 Quantenmechanik.mp3",
                         "duration": 198
                     },
                     {
                         "num": 4,
                         "title": "Transformation!",
                         "originalTitle": "04 Transformation!",
-                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nukorochki/Album. Grenzgänger/04 Transformation!.mp3",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nukorochki/Demo. Demos/04 Transformation!.mp3",
                         "duration": 196
                     },
                     {
                         "num": 5,
                         "title": "Stahlträume",
                         "originalTitle": "05 Stahlträume",
-                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nukorochki/Album. Grenzgänger/05 Stahlträume.mp3",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nukorochki/Demo. Demos/05 Stahlträume.mp3",
                         "duration": 468
                     },
                     {
                         "num": 6,
                         "title": "Systemdown",
                         "originalTitle": "06 Systemdown",
-                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nukorochki/Album. Grenzgänger/06 Systemdown.mp3",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nukorochki/Demo. Demos/06 Systemdown.mp3",
                         "duration": 229
                     },
                     {
                         "num": 7,
                         "title": "Digitale Rebellion",
                         "originalTitle": "07 Digitale Rebellion",
-                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nukorochki/Album. Grenzgänger/07 Digitale Rebellion.mp3",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nukorochki/Demo. Demos/07 Digitale Rebellion.mp3",
                         "duration": 141
                     },
                     {
                         "num": 8,
                         "title": "Megathron",
                         "originalTitle": "08 Megathron",
-                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nukorochki/Album. Grenzgänger/08 Megathron.mp3",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nukorochki/Demo. Demos/08 Megathron.mp3",
                         "duration": 193
                     },
                     {
                         "num": 9,
                         "title": "Lieber Vlad",
                         "originalTitle": "09 Lieber Vlad",
-                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nukorochki/Album. Grenzgänger/09 Lieber Vlad.mp3",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nukorochki/Demo. Demos/09 Lieber Vlad.mp3",
                         "duration": 172
                     },
                     {
                         "num": 10,
                         "title": "Metamorphose",
                         "originalTitle": "10 Metamorphose",
-                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nukorochki/Album. Grenzgänger/10 Metamorphose.mp3",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nukorochki/Demo. Demos/10 Metamorphose.mp3",
                         "duration": 183
                     },
                     {
                         "num": 11,
                         "title": "Cyberkraft",
                         "originalTitle": "11 Cyberkraft",
-                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nukorochki/Album. Grenzgänger/11 Cyberkraft.mp3",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nukorochki/Demo. Demos/11 Cyberkraft.mp3",
                         "duration": 169
                     },
                     {
                         "num": 12,
                         "title": "Grenzgänger",
                         "originalTitle": "12 Grenzgänger",
-                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nukorochki/Album. Grenzgänger/12 Grenzgänger.mp3",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nukorochki/Demo. Demos/12 Grenzgänger.mp3",
                         "duration": 395
+                    },
+                    {
+                        "num": 13,
+                        "title": "Nachtmaschine",
+                        "originalTitle": "13 Nachtmaschine",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/nukorochki/Demo. Demos/13 Nachtmaschine.mp3",
+                        "duration": 190
                     }
                 ]
             }
-        ],
-        "eps": [],
-        "demos": []
+        ]
     },
     "psykorochki": {
         "name": "PSYKORO4KI",
