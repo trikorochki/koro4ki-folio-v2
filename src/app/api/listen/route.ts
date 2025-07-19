@@ -4,6 +4,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import Redis from 'ioredis';
 import { UAParser } from 'ua-parser-js';
 
+export const dynamic = 'force-dynamic';
+
 let redis: Redis | null = null;
 
 const getRedisClient = () => {
