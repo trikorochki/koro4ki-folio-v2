@@ -103,16 +103,16 @@ export const useMusicPlayer = create<MusicPlayerStore>((set, get) => ({
     
     // Record analytics with error handling
     if (typeof window !== 'undefined') {
-      fetch('/api/listen', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          trackId: track.id,
-          event: '30s_listen',
-        }),
-      }).catch(error => {
-        console.warn('Analytics request failed:', error);
-      });
+    fetch('/api/listen', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        trackId: track.id,
+        event: '30s_listen', // или eventType
+      }),
+    }).catch(error => {
+      console.warn('Analytics request failed:', error);
+    });
     }
   },
 

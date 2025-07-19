@@ -5,10 +5,12 @@ import { useAuth } from './AuthProvider'
 import { 
   ChartBarIcon, 
   MusicalNoteIcon, 
-  UsersIcon, 
-  ArrowRightOnRectangleIcon 
+  UsersIcon
 
 } from '@heroicons/react/24/outline'
+
+const ArrowRightOnRectangleIcon = ({ className }: { className?: string }) => <span className={className}>→</span>;
+
 
 interface LayoutProps {
   children: ReactNode
