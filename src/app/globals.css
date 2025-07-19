@@ -1,0 +1,825 @@
+/* src/app/globals.css */
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+/* Подключение Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Tektur:wght@400;500;700&family=Goldman:wght@400;700&family=Aldrich&family=Tomorrow:wght@400;700&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&family=JetBrains+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+
+:root {
+  --bg-color: #121212;
+  --primary-text-color: #ffffff;
+  --secondary-text-color: #b3b3b3;
+  --card-bg-color: #181818;
+  --card-hover-bg-color: #282828;
+  --accent-color: #1DB954;
+  --player-height: 90px;
+  --header-height: 80px;
+  --footer-height: 60px;
+  --z-footer: 40;
+  --z-player: 50;
+  --z-header: 1000;
+  --z-dropdown: 1001;
+  
+  /* Интеграция с Next.js шрифтовыми переменными */
+  --font-heading: var(--font-tektur), 'Tektur', 'Goldman', 'Aldrich', 'Tomorrow', 'Turret road', sans-serif;
+  --font-body: var(--font-space-mono), 'Space Mono', 'JetBrains Mono', 'Consolas', 'Monaco', monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-body);
+  background-color: var(--bg-color);
+  color: var(--primary-text-color);
+  padding-top: var(--header-height);
+  padding-bottom: calc(var(--footer-height) + var(--player-height));
+}
+
+.scrollbar-hide {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Классы для использования шрифтов */
+.font-heading {
+  font-family: var(--font-heading);
+}
+
+.font-body {
+  font-family: var(--font-body);
+}
+
+.font-cyrillic {
+  font-family: 'JetBrains Mono', 'Consolas', 'Monaco', monospace;
+}
+
+/* ✅ ИСПРАВЛЕНО: Унифицированные стили для pause кнопок */
+.pause-button,
+.pause-symbol,
+.play-pause-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+/* Стандартные pause полосы - тонкие, как в нижнем плеере */
+.pause-symbol {
+  display: flex;
+  gap: 2px;
+  align-items: center;
+  justify-content: center;
+}
+
+.pause-symbol div,
+.pause-bar {
+  width: 2px;           /* ✅ ИСПРАВЛЕНО: тонкие полосы вместо 3px */
+  height: 12px;         /* ✅ ИСПРАВЛЕНО: стандартная высота */
+  background: currentColor;
+  border-radius: 1px;   /* ✅ ДОБАВЛЕНО: скругление углов */
+}
+
+/* Альтернативные pause элементы через псевдоэлементы */
+.pause-button::before,
+.pause-button::after {
+  content: '';
+  position: absolute;
+  width: 2px;           /* ✅ ИСПРАВЛЕНО: унифицированная толщина */
+  height: 12px;
+  background: currentColor;
+  border-radius: 1px;
+}
+
+.pause-button::before {
+  left: calc(50% - 3px);
+}
+
+.pause-button::after {
+  right: calc(50% - 3px);
+}
+
+/* ✅ ИСПРАВЛЕНО: Очистка нежелательных hover эффектов */
+.play-button,
+.play-action-btn,
+.header-play-random-btn {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.15s ease;
+}
+
+/* Убираем зеленые пятна и артефакты hover */
+.play-button:hover::before,
+.play-button:hover::after,
+.play-action-btn:hover::before,
+.play-action-btn:hover::after {
+  display: none;
+}
+
+/* Стандартизированный hover эффект без артефактов */
+.play-button:hover,
+.play-action-btn:hover,
+.icon-btn:hover {
+  transform: scale(1.02);
+  transition: transform 0.15s ease;
+}
+
+/* Анимации */
+@keyframes equalizer-bounce {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(0.3); }
+}
+
+.equalizer-bar {
+  animation: equalizer-bounce 0.8s infinite ease-in-out;
+}
+
+.equalizer-bar:nth-child(1) { animation-delay: 0s; }
+.equalizer-bar:nth-child(2) { animation-delay: 0.1s; }
+.equalizer-bar:nth-child(3) { animation-delay: 0.2s; }
+.equalizer-bar:nth-child(4) { animation-delay: 0.3s; }
+
+.animation-delay-0 { animation-delay: 0ms; }
+.animation-delay-100 { animation-delay: 100ms; }
+.animation-delay-200 { animation-delay: 200ms; }
+.animation-delay-300 { animation-delay: 300ms; }
+
+/* Главная страница */
+.landing-container {
+  min-height: calc(100vh - var(--header-height) - var(--footer-height) - var(--player-height));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem 2rem;
+  padding-top: 2rem;
+}
+
+.main-title {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.main-title h1 {
+  font-family: var(--font-heading);
+  font-size: 4rem;
+  font-weight: 700;
+  color: var(--primary-text-color);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.main-title h2 {
+  font-family: var(--font-heading);
+  font-size: 2.5rem;
+  font-weight: 400;
+  color: var(--primary-text-color);
+  margin: 0;
+  line-height: 1.2;
+}
+
+/* Квадратные карточки артистов с большими изображениями */
+.artist-choice-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 2rem;
+  max-width: 1200px;
+  width: 100%;
+}
+
+.artist-choice-card {
+  background: var(--card-bg-color);
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.3s ease;
+  border: 1px solid transparent;
+  aspect-ratio: 1;
+  height: auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 320px;
+  position: relative;
+  /* Убираем Tailwind артефакты */
+  --tw-ring-color: transparent;
+  --tw-ring-shadow: none;
+}
+
+.artist-choice-card:hover {
+  background: var(--card-hover-bg-color);
+  transform: translateY(-2px) scale(1.02);
+  --tw-ring-color: transparent;
+  --tw-ring-shadow: none;
+}
+
+/* Контейнер изображения */
+.artist-choice-card .artist-image-container {
+  position: relative;
+  width: 12rem;
+  height: 12rem;
+  margin: 0 auto 1rem auto;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.artist-choice-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: all 0.3s ease;
+}
+
+/* Hover overlay - упрощенная версия */
+.artist-choice-card .hover-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: transparent;
+  transition: background-color 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.artist-choice-card:hover .hover-overlay {
+  background-color: rgba(0, 0, 0, 0.4);
+}
+
+/* Типография */
+.artist-choice-card h2,
+.artist-choice-card h3 {
+  font-family: var(--font-heading);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--primary-text-color);
+  margin: 0 0 0.5rem 0;
+  transition: color 0.3s ease;
+}
+
+.artist-choice-card:hover h2,
+.artist-choice-card:hover h3 {
+  color: var(--accent-color);
+}
+
+.artist-choice-card p {
+  font-size: 0.875rem;
+  color: var(--secondary-text-color);
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Унифицированные стили pause кнопок - ОБЪЕДИНЕНО */
+.artist-choice-card .pause-symbol div,
+.artist-choice-card .pause-unified .pause-symbol div,
+.artist-choice-card [data-pause-bar],
+.artist-choice-card .pause-bar {
+  width: 2px;
+  height: 12px;
+  background: currentColor;
+  border-radius: 1px;
+}
+
+/* Очистка нежелательных элементов */
+.artist-choice-card::before,
+.artist-choice-card::after,
+.artist-choice-card *::before,
+.artist-choice-card *::after {
+  display: none;
+}
+
+
+/* Шапка */
+.site-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: var(--header-height);
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--card-hover-bg-color);
+  z-index: var(--z-header);
+}
+
+.logo-link img {
+  height: 60px;
+  width: auto;
+}
+
+/* ✅ ИСПРАВЛЕНО: Кнопка Play Random без зеленых артефактов */
+.header-play-random-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: var(--accent-color);
+  border: none;
+  border-radius: 25px;
+  padding: 0.75rem 1.5rem;
+  color: black;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.15s ease; /* ✅ ИСПРАВЛЕНО: более быстрый transition */
+}
+
+.header-play-random-btn:hover {
+  background: #1ed760;
+  transform: scale(1.02); /* ✅ ИСПРАВЛЕНО: менее агрессивное масштабирование */
+}
+
+.header-play-random-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.play-circle {
+  width: 20px;
+  height: 20px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.play-triangle {
+  width: 0;
+  height: 0;
+  border-left: 8px solid black;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  margin-left: 2px;
+}
+
+/* ✅ ИСПРАВЛЕНО: Унифицированные pause символы в header */
+.pause-symbol {
+  display: flex;
+  gap: 2px;
+}
+
+.pause-symbol div {
+  width: 2px;    /* ✅ ИСПРАВЛЕНО: тонкие полосы */
+  height: 12px;
+  background: black;
+  border-radius: 1px; /* ✅ ДОБАВЛЕНО */
+}
+
+/* Dropdown */
+.dropdown {
+  position: relative;
+}
+
+.dropdown-btn {
+  background: transparent;
+  border: 1px solid var(--secondary-text-color);
+  color: var(--secondary-text-color);
+  padding: 0.5rem 1rem;
+  border-radius: 25px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.dropdown-btn:hover {
+  color: var(--primary-text-color);
+  border-color: var(--primary-text-color);
+}
+
+.dropdown-content {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 0.5rem;
+  background: var(--card-bg-color);
+  border: 1px solid var(--card-hover-bg-color);
+  border-radius: 8px;
+  min-width: 200px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: var(--z-dropdown);
+  overflow: hidden;
+}
+
+.dropdown-content a {
+  display: block;
+  padding: 0.75rem 1rem;
+  color: var(--primary-text-color);
+  text-decoration: none;
+  transition: background-color 0.3s ease;
+}
+
+.dropdown-content a:hover {
+  background: var(--card-hover-bg-color);
+}
+
+.dropdown-content a:first-child {
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+}
+
+.dropdown-content a:last-child {
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
+}
+
+/* Footer в самом низу экрана */
+.site-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: var(--footer-height);
+  background: var(--card-bg-color);
+  border-top: 1px solid var(--card-hover-bg-color);
+  z-index: var(--z-footer);
+}
+
+.footer-content {
+  max-width: 1280px;
+  margin: 0 auto;
+  text-align: center;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 1rem;
+}
+
+.copyright {
+  color: var(--secondary-text-color);
+  font-size: 0.75rem;
+  margin-bottom: 0.25rem;
+  font-family: var(--font-body);
+}
+
+.contact-info {
+  color: var(--secondary-text-color);
+  font-size: 0.75rem;
+  font-family: var(--font-body);
+}
+
+.email-link {
+  color: var(--accent-color);
+  text-decoration: underline;
+  transition: color 0.3s ease;
+}
+
+.email-link:hover {
+  color: #1ed760;
+}
+
+/* Плеер над footer */
+.player-footer {
+  position: fixed;
+  bottom: var(--footer-height);
+  left: 0;
+  width: 100%;
+  height: var(--player-height);
+  background: var(--card-bg-color);
+  border-top: 1px solid var(--card-hover-bg-color);
+  z-index: var(--z-player);
+}
+
+/* Заголовок артиста */
+.artist-header {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  margin-bottom: 2rem;
+  padding: 2rem;
+}
+
+.artist-avatar {
+  flex-shrink: 0;
+}
+
+.artist-info {
+  flex: 1;
+}
+
+.artist-info h1 {
+  font-family: var(--font-heading);
+  font-size: 3rem;
+  font-weight: 700;
+  color: var(--primary-text-color);
+  margin: 0 0 1rem 0;
+}
+
+.artist-info p {
+  font-size: 1.125rem;
+  line-height: 1.6;
+  margin: 0 0 0.75rem 0;
+}
+
+.artist-info p:first-of-type {
+  color: var(--primary-text-color);
+  font-weight: 500;
+}
+
+.artist-info p:nth-of-type(2) {
+  color: var(--secondary-text-color);
+  margin-bottom: 1.5rem;
+}
+
+.discography-btn {
+  background: var(--accent-color);
+  color: black;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 25px;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.15s ease; /* ✅ ИСПРАВЛЕНО */
+}
+
+.discography-btn:hover {
+  background: #1ed760;
+  transform: scale(1.02); /* ✅ ИСПРАВЛЕНО */
+}
+
+/* Секция All Tracks */
+.random-section {
+  margin-bottom: 2rem;
+}
+
+.random-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.random-header h3 {
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--primary-text-color);
+  margin: 0;
+}
+
+.random-header-buttons {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* ✅ ИСПРАВЛЕНО: Стандартизированные кнопки действий */
+.play-action-btn {
+  background: var(--accent-color);
+  color: black;
+  border: none;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+}
+
+.play-action-btn:hover {
+  background: #1ed760;
+  transform: scale(1.02);
+}
+
+/* Убираем псевдоэлементы от play-action-btn */
+.play-action-btn::before,
+.play-action-btn::after {
+  display: none;
+}
+
+.icon-btn {
+  background: var(--card-bg-color);
+  color: var(--primary-text-color);
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease; /* ✅ ИСПРАВЛЕНО */
+}
+
+.icon-btn:hover {
+  background: var(--card-hover-bg-color);
+  transform: scale(1.02); /* ✅ ИСПРАВЛЕНО */
+}
+
+/* Секция Discography */
+.discography-section {
+  margin-bottom: 2rem;
+}
+
+.discography-section h2 {
+  font-family: var(--font-heading);
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--primary-text-color);
+  margin: 0 0 1.5rem 0;
+}
+
+.tab-nav {
+  display: flex;
+  gap: 1rem;
+  border-bottom: 1px solid var(--card-hover-bg-color);
+  margin-bottom: 1.5rem;
+}
+
+.tab-btn {
+  background: transparent;
+  border: none;
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.3s ease;
+  font-family: var(--font-body);
+}
+
+.tab-btn.active {
+  color: var(--primary-text-color);
+  border-bottom-color: var(--accent-color);
+}
+
+.tab-btn:not(.active) {
+  color: var(--secondary-text-color);
+}
+
+.tab-btn:hover {
+  color: var(--primary-text-color);
+}
+
+/* Секция Other Artists */
+.other-artists-section {
+  margin-bottom: 2rem;
+}
+
+.other-artists-section h2 {
+  font-family: var(--font-heading);
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--primary-text-color);
+  margin: 0 0 1.5rem 0;
+}
+
+/* Разделители */
+.section-divider {
+  border-top: 1px solid var(--card-hover-bg-color);
+  margin: 2rem 0;
+}
+
+/* Группы hover эффектов */
+.group:hover .group-hover\:opacity-100 {
+  opacity: 1;
+}
+
+.group:hover .group-hover\:bg-black\/40 {
+  background-color: rgba(0, 0, 0, 0.4);
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+  body {
+    padding-bottom: calc(var(--footer-height) + var(--player-height) + 1rem);
+  }
+
+  .main-title h1 {
+    font-size: 2.5rem;
+  }
+  
+  .main-title h2 {
+    font-size: 1.8rem;
+  }
+  
+  .artist-choice-container {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+  }
+  
+  .artist-choice-card {
+    min-height: 280px;
+    padding: 1rem;
+  }
+  
+  .artist-choice-card .artist-image-container {
+    width: 10rem;
+    height: 10rem;
+  }
+  
+  .artist-choice-card h2,
+  .artist-choice-card h3 {
+    font-size: 1.125rem;
+  }
+  
+  .artist-choice-card p {
+    font-size: 0.8rem;
+  }
+  
+  .artist-image-container {
+    width: 100px;
+    height: 100px;
+  }
+  
+  .header-play-random-btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+  }
+  
+  .play-text {
+    display: none;
+  }
+
+  .artist-header {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+    padding: 1rem;
+  }
+  
+  .artist-info h1 {
+    font-size: 2rem;
+  }
+  
+  .artist-info p {
+    font-size: 1rem;
+  }
+  
+  .random-header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+  
+  .tab-nav {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .footer-content {
+    padding: 0 0.5rem;
+  }
+
+  .copyright,
+  .contact-info {
+    font-size: 0.7rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .landing-container {
+    padding: 0.5rem 1rem;
+  }
+
+  .main-title {
+    margin-bottom: 2rem;
+  }
+
+  .main-title h1 {
+    font-size: 2rem;
+  }
+  
+  .main-title h2 {
+    font-size: 1.5rem;
+  }
+
+  .artist-choice-container {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .artist-choice-card {
+    min-height: 260px;
+    padding: 1rem;
+  }
+  
+  .artist-choice-card .artist-image-container {
+    width: 9rem;
+    height: 9rem;
+  }
+
+  .copyright,
+  .contact-info {
+    font-size: 0.65rem;
+  }
+}

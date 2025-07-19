@@ -1,14 +1,5 @@
-.env*.local
-/venv
-.env*
-/music
-.env
-.env.development.local
-**.DS_Store
-# .gitignore
-
 # Dependencies
-/node_modules
+node_modules/
 /.pnp
 .pnp.js
 
@@ -18,6 +9,7 @@
 # Next.js
 /.next/
 /out/
+next-env.d.ts
 
 # Production
 /build
@@ -25,21 +17,91 @@
 # Misc
 .DS_Store
 *.pem
+Thumbs.db
 
-# Local Environment Variables
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Local env files
+.env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
 
-# Log files
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+# Vercel
+.vercel
 
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnp
-.next/
+# TypeScript
+*.tsbuildinfo
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+logs
+*.log
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional stylelint cache
+.stylelintcache
+
+# Microbundle cache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# parcel-bundler cache (https://parceljs.org/)
+.cache
+.parcel-cache
+
+# Stores VSCode versions used for testing VSCode extensions
+.vscode-test
+
+# yarn v2
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp.*
+
+# ✅ КРИТИЧНО: Музыкальные файлы (хранятся в Vercel Blob Storage)
+public/music/
+
+# ✅ Временные файлы плейлиста
+playlist-data.js
+music-cache.json
+
+# ✅ Локальные скрипты для загрузки музыки
+scripts/upload-music.js
+scripts/migrate-to-blob.js
+
+# ✅ Backup файлы
+*.backup
+*.bak
