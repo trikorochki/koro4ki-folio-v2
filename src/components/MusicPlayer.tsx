@@ -188,16 +188,31 @@ export default function MusicPlayer() {
   // ================================================================================
 
   // Consolidated play/pause effect
+// src/components/MusicPlayer.tsx - в useEffect для currentTrack
+
   useEffect(() => {
     const audio = audioRef.current;
-    if (!audio) return;
+    if (!audio || !currentTrack) return;
 
-    const playPromise = isPlaying ? audio.play() : Promise.resolve(audio.pause());
+    // ✅ Используем прямой URL из track.file (уже из Blob Storage)
+    const audioSrc = currentTrack.file;
+    console.log(`🎵 Loading audio: ${currentTrack.title} from ${audioSrc}`);
     
-    if (playPromise && typeof playPromise.catch === 'function') {
-      playPromise.catch(handleAudioError);
+    // Проверяем, что это валидный URL
+    if (!audioSrc.startsWith('http')) {
+      console.error('❌ Invalid audio URL:', audioSrc);
+      return;
     }
-  }, [isPlaying, handleAudioError]);
+    
+    audio.src = audioSrc;
+    audio.load();
+    setActualDuration(0);
+
+    if (isPlaying) {
+      audio.play().catch(handleAudioError);
+    }
+  }, [currentTrack, isPlaying, handleAudioError]);
+
 
   // Volume control effect
   useEffect(() => {

@@ -6,7 +6,7 @@ import { ARTIST_DATA } from '@/data/artists';
 
 interface BlobFile {
   pathname: string;
-  url: string;
+  url: string; // ✅ Прямой URL из Blob Storage
   size: number;
   uploadedAt: Date;
 }
@@ -66,7 +66,7 @@ export async function generateBlobPlaylistData(): Promise<PlaylistData> {
           id: `${artistId}_${cleanName.replace(/\s+/g, '_')}`,
           title: cleanName,
           type: releaseType,
-          cover: '',
+          cover: '', // Будет найдена ниже
           tracks: [],
           artistId: artistId,
         };
@@ -79,45 +79,64 @@ export async function generateBlobPlaylistData(): Promise<PlaylistData> {
           /\.(mp3|wav|flac|m4a)$/i.test(file.pathname)
         );
 
-        for (let i = 0; i < sortedFiles.length; i++) {
-          const file = sortedFiles[i];
-          const fileName = file.pathname.split('/').pop() || '';
+        // ✅ ИСПРАВЛЕНО: Поиск обложки среди файлов
+        const coverFile = sortedFiles.find(file => {
+          const fileName = file.pathname.split('/').pop()?.toLowerCase() || '';
+          return fileName === 'cover.jpg' || 
+                 fileName === 'cover.jpeg' || 
+                 fileName === 'cover.png' ||
+                 fileName === 'folder.jpg' ||
+                 fileName === 'albumart.jpg';
+        });
 
-          if (fileName.toLowerCase() === 'cover.jpg') {
-            album.cover = `/api/music/${artistId}/${releaseFolderName}/${fileName}`;
-            continue;
-          }
-
-          if (/\.(mp3|wav|flac|m4a)$/i.test(fileName)) {
-            const { trackNumber, cleanTitle, originalTitle } = parseTrackNumberAndTitle(fileName);
-            
-            const finalTrackNumber = trackNumber !== null 
-              ? trackNumber 
-              : audioFiles.findIndex(af => af.pathname === file.pathname) + 1;
-
-            // ✅ ОПТИМИЗИРОВАНО: Используем placeholder длительность для быстрой загрузки
-            const track: Track = {
-              id: `${artistId}_${cleanName}_${finalTrackNumber}`,
-              number: finalTrackNumber,
-              title: cleanTitle,
-              originalTitle: originalTitle,
-              file: `/api/music/${artistId}/${releaseFolderName}/${fileName}`,
-              duration: '0:00', // Placeholder - будет обновлен при воспроизведении
-              albumId: album.id,
-              artistId: artistId,
-            };
-
-            album.tracks.push(track);
-          }
+        // ✅ КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: Используем прямой URL из Blob Storage для обложки
+        if (coverFile) {
+          album.cover = coverFile.url;
+          console.log(`  🖼️ Found cover: ${coverFile.pathname}`);
+        } else {
+          console.log(`  ⚠️ No cover found for ${releaseFolderName}`);
         }
 
-        // ✅ ИСПРАВЛЕНО: Безопасная сортировка с проверкой типов
+        for (let i = 0; i < audioFiles.length; i++) {
+          const file = audioFiles[i];
+          const fileName = file.pathname.split('/').pop() || '';
+
+          const { trackNumber, cleanTitle, originalTitle } = parseTrackNumberAndTitle(fileName);
+          
+          const finalTrackNumber = trackNumber !== null 
+            ? trackNumber 
+            : i + 1;
+
+          // ✅ КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: Используем прямой URL из Blob Storage для аудио
+          const track: Track = {
+            id: `${artistId}_${cleanName}_${finalTrackNumber}`,
+            title: cleanTitle,
+            file: file.url, // ✅ Прямой URL вместо API пути
+            duration: '0:00',
+            artistId: artistId,
+            albumName: cleanName,
+            number: finalTrackNumber,
+            originalTitle: originalTitle,
+            albumId: album.id,
+            metadata: {
+              pathname: file.pathname,
+              fileName: fileName,
+              size: file.size,
+              uploadedAt: file.uploadedAt.toISOString(),
+              number: finalTrackNumber,
+              originalTitle: originalTitle
+            }
+          };
+
+          album.tracks.push(track);
+          console.log(`    🎵 Added track: ${cleanTitle} -> ${file.url}`);
+        }
+
         album.tracks.sort((a, b) => {
           const aNumber = a.number || 0;
           const bNumber = b.number || 0;
           return aNumber - bNumber;
         });
-
 
         if (album.tracks.length > 0) {
           artists[artistId][releaseType].push(album);
@@ -157,7 +176,7 @@ async function listBlobFiles(): Promise<BlobFile[]> {
 
     return blobs.map(blob => ({
       pathname: blob.pathname,
-      url: blob.url,
+      url: blob.url, // ✅ Сохраняем прямой URL
       size: blob.size,
       uploadedAt: blob.uploadedAt,
     }));
