@@ -33,7 +33,6 @@ export async function GET(request: NextRequest) {
 
     console.log(`📂 Found ${blobs.length} files in Blob Storage`);
 
-    // ✅ ИСПРАВЛЕНИЕ 1: Убираем явную типизацию, TypeScript выведет тип автоматически
     const audioFiles = blobs
       .filter(blob => {
         const isAudio = blob.pathname.endsWith('.mp3') || 
@@ -73,7 +72,7 @@ export async function GET(request: NextRequest) {
                 : (blob.uploadedAt instanceof Date
                     ? blob.uploadedAt.toISOString()
                     : String(blob.uploadedAt))
-            } as ProcessedTrack; // ✅ Явное приведение типа
+            } as ProcessedTrack;
           }
           
           console.warn(`Skipping malformed path: ${blob.pathname}`);
@@ -83,10 +82,8 @@ export async function GET(request: NextRequest) {
           return null;
         }
       })
-      // ✅ ИСПРАВЛЕНИЕ 2: Правильная типизация для filter с type predicate
       .filter((track): track is ProcessedTrack => track !== null)
       .sort((a, b) => {
-        // ✅ ИСПРАВЛЕНИЕ 3: Деструктуризация параметров в sort callback
         const artistCompare = a.artistId.localeCompare(b.artistId);
         if (artistCompare !== 0) return artistCompare;
         

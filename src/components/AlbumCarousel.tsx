@@ -15,19 +15,16 @@ interface AlbumCarouselProps {
   maxTracksPreview?: number;
 }
 
-// Функция для определения кириллицы
 function detectCyrillic(text: string): boolean {
   return /[\u0400-\u04FF]/.test(text);
 }
 
-// ✅ ДОБАВЛЕНО: Функция для проверки валидности обложки
 function hasValidCover(album: Album): boolean {
   return album.cover !== undefined && 
          album.cover !== null && 
          album.cover.trim() !== '';
 }
 
-// ✅ ДОБАВЛЕНО: Компонент placeholder для отсутствующих обложек
 const AlbumCoverPlaceholder = ({ title }: { title: string }) => (
   <div className="w-full h-full bg-gray-700 rounded-lg flex items-center justify-center">
     <div className="text-center text-gray-400">
@@ -57,13 +54,11 @@ export default function AlbumCarousel({
     setExpandedAlbums(newExpanded);
   };
 
-  // ✅ ДОБАВЛЕНО: Обработчик ошибок загрузки изображений
   const handleImageError = (albumId: string, coverUrl: string) => {
     console.warn(`Failed to load album cover for ${albumId}: ${coverUrl}`);
     setFailedImages(prev => new Set(prev).add(albumId));
   };
 
-  // ✅ ДОБАВЛЕНО: Компонент обложки альбома с fallback логикой
   const AlbumCover = ({ 
     album, 
     className, 
@@ -87,7 +82,7 @@ export default function AlbumCarousel({
 
     return (
       <Image
-        src={album.cover!} // Используем ! так как проверили выше
+        src={album.cover!}
         alt={`${album.title} album cover`}
         width={width}
         height={height}
@@ -127,7 +122,6 @@ export default function AlbumCarousel({
                 className="bg-card-bg-color hover:bg-card-hover-bg-color rounded-lg p-4 transition-all duration-200 hover:scale-105 group min-w-[280px] max-w-[280px]"
               >
                 <div className="relative mb-4">
-                  {/* ✅ ИСПРАВЛЕНО: Используем компонент AlbumCover */}
                   <AlbumCover
                     album={album}
                     className="w-full h-48 rounded-lg object-cover"
@@ -177,7 +171,6 @@ export default function AlbumCarousel({
     );
   }
 
-  // Vertical layout (default)
   return (
     <div className="space-y-8">
       {albums.map((album) => {
@@ -196,9 +189,7 @@ export default function AlbumCarousel({
             className="bg-card-bg-color hover:bg-card-hover-bg-color rounded-lg p-6 transition-all duration-200 border border-transparent hover:border-accent-color/30"
           >
             <div className="flex flex-col lg:flex-row gap-6">
-              {/* Album Cover */}
               <div className="flex-shrink-0 relative group">
-                {/* ✅ ИСПРАВЛЕНО: Используем компонент AlbumCover */}
                 <AlbumCover
                   album={album}
                   className="w-48 h-48 rounded-lg object-cover shadow-lg"
@@ -221,7 +212,6 @@ export default function AlbumCarousel({
                 )}
               </div>
               
-              {/* Album Info */}
               <div className="flex-1 min-w-0">
                 <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-4">
                   <h3 className={`text-2xl font-heading font-bold ${
@@ -262,7 +252,6 @@ export default function AlbumCarousel({
                   </span>
                 </div>
                 
-                {/* Track List */}
                 <div className="space-y-2">
                   <TrackList 
                     tracks={tracksToShow} 

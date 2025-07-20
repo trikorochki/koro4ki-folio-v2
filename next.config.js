@@ -5,49 +5,33 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'blob.vercel-storage.com',
+        hostname: '*.public.blob.vercel-storage.com',
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'rpattpnro3om3v4l.public.blob.vercel-storage.com',
+        port: '',
+        pathname: '/**',
+      },
+      // Добавляем поддержку других доменов Blob Storage
+      {
+        protocol: 'https',
+        hostname: '*.blob.vercel-storage.com',
+        port: '',
+        pathname: '/**',
+      }
     ],
+    // Дополнительные настройки для оптимизации
+    formats: ['image/avif', 'image/webp'],
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
   },
-  env: {
-    REDIS_URL: process.env.REDIS_URL,
-    BLOB_READ_WRITE_TOKEN: process.env.BLOB_READ_WRITE_TOKEN,
-    ANALYTICS_TOKEN: process.env.ANALYTICS_TOKEN,
+  // Экспериментальные функции для улучшения производительности
+  experimental: {
+    optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
   },
-  // ✅ Добавляем поддержку статических файлов из папки music
-  async rewrites() {
-    return [
-      // Статические музыкальные файлы
-      {
-        source: '/music/:path*',
-        destination: '/music/:path*',
-      },
-      // API маршруты
-      {
-        source: '/admin/:path*',
-        destination: '/admin/:path*',
-      },
-      {
-        source: '/api/admin/:path*',
-        destination: '/api/admin/:path*',
-      },
-      {
-        source: '/api/:path*',
-        destination: '/api/:path*',
-      },
-    ];
-  },
-  async redirects() {
-    return [
-      {
-        source: '/admin.html',
-        destination: '/admin',
-        permanent: true,
-      },
-    ];
-  },
-};
+}
 
-module.exports = nextConfig;
+module.exports = nextConfig

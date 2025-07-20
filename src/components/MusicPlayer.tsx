@@ -11,15 +11,6 @@ import { DurationCache } from '@/lib/duration-cache';
 
 interface AudioProgressEvent extends React.MouseEvent<HTMLDivElement> {}
 
-const ARTIST_MAP: Record<string, string> = {
-  'flowkorochki': 'FLOWKORO4KI',
-  'psykorochki': 'PSYKORO4KI',
-  'riffkorochki': 'RIFFKORO4KI',
-  'trapkorochki': 'TRAPKORO4KI',
-  'streetkorochki': 'STREETKORO4KI',
-  'nukorochki': 'NÜKORO4KI'
-} as const;
-
 const COLORS = {
   background: '#181818',
   border: '#282828',
@@ -71,11 +62,20 @@ export default function MusicPlayer() {
 
   const getArtistName = useCallback((): string => {
     if (!currentTrack) return '';
-    return ARTIST_MAP[currentTrack.artistId] || currentTrack.artistId.toUpperCase();
+    const artistMap: Record<string, string> = {
+      'flowkorochki': 'FLOWKORO4KI',
+      'psykorochki': 'PSYKORO4KI',
+      'riffkorochki': 'RIFFKORO4KI',
+      'trapkorochki': 'TRAPKORO4KI',
+      'streetkorochki': 'STREETKORO4KI',
+      'nukorochki': 'NÜKORO4KI'
+    };
+    return artistMap[currentTrack.artistId] || currentTrack.artistId.toUpperCase();
   }, [currentTrack]);
 
   const getAlbumName = useCallback((): string => {
     if (!currentTrack) return '';
+    if (currentTrack.albumName) return currentTrack.albumName;
     const parts = currentTrack.id.split('_');
     return parts.slice(1, -1).join(' ').replace(/_/g, ' ');
   }, [currentTrack]);
@@ -188,31 +188,16 @@ export default function MusicPlayer() {
   // ================================================================================
 
   // Consolidated play/pause effect
-// src/components/MusicPlayer.tsx - в useEffect для currentTrack
-
   useEffect(() => {
     const audio = audioRef.current;
-    if (!audio || !currentTrack) return;
+    if (!audio) return;
 
-    // ✅ Используем прямой URL из track.file (уже из Blob Storage)
-    const audioSrc = currentTrack.file;
-    console.log(`🎵 Loading audio: ${currentTrack.title} from ${audioSrc}`);
+    const playPromise = isPlaying ? audio.play() : Promise.resolve(audio.pause());
     
-    // Проверяем, что это валидный URL
-    if (!audioSrc.startsWith('http')) {
-      console.error('❌ Invalid audio URL:', audioSrc);
-      return;
+    if (playPromise && typeof playPromise.catch === 'function') {
+      playPromise.catch(handleAudioError);
     }
-    
-    audio.src = audioSrc;
-    audio.load();
-    setActualDuration(0);
-
-    if (isPlaying) {
-      audio.play().catch(handleAudioError);
-    }
-  }, [currentTrack, isPlaying, handleAudioError]);
-
+  }, [isPlaying, handleAudioError]);
 
   // Volume control effect
   useEffect(() => {
@@ -227,9 +212,9 @@ export default function MusicPlayer() {
     const audio = audioRef.current;
     if (!audio || !currentTrack) return;
 
-    const audioSrc = currentTrack.file.startsWith('/api/music/') 
-      ? currentTrack.file 
-      : `/api/music/${currentTrack.file}`;
+    // Используем прямой URL из track.file
+    const audioSrc = currentTrack.file;
+    console.log(`🎵 Loading audio: ${currentTrack.title} from ${audioSrc}`);
     
     audio.src = audioSrc;
     audio.load();

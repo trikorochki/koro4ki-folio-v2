@@ -2,13 +2,13 @@
 export interface Track {
   id: string;
   title: string;
-  file: string; // ✅ Прямой URL из Blob Storage
+  file: string; // Прямой URL из Blob Storage
   duration: string;
   artistId: string;
   albumName?: string;
-  number?: number; // ✅ ДОБАВЛЕНО: Номер трека
-  originalTitle?: string; // ✅ ДОБАВЛЕНО: Оригинальное название
-  albumId?: string; // ✅ ДОБАВЛЕНО: ID альбома
+  number?: number; // Номер трека
+  originalTitle?: string; // Оригинальное название
+  albumId?: string; // ID альбома
   metadata?: {
     pathname: string;
     fileName: string;
@@ -72,7 +72,6 @@ export interface AnalyticsEvent {
   browser: string;
 }
 
-// ✅ НОВЫЕ ИНТЕРФЕЙСЫ для работы с Blob Storage
 export interface BlobTrackData {
   id: string;
   pathname: string;

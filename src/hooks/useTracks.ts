@@ -2,23 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Track } from '@/types/music';
-
-interface TrackResponse {
-  success: boolean;
-  total: number;
-  tracks: Array<{
-    id: string;
-    pathname: string;
-    url: string;
-    artistId: string;
-    albumName: string;
-    fileName: string;
-    title: string;
-    size: number;
-    uploadedAt: string;
-  }>;
-}
+import { Track, BlobResponse } from '@/types/music';
 
 export const useTracks = () => {
   const [tracks, setTracks] = useState<Track[]>([]);
@@ -38,23 +22,19 @@ export const useTracks = () => {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
       
-      const data: TrackResponse = await response.json();
+      const data: BlobResponse = await response.json();
       
       if (!data.success) {
         throw new Error('Failed to load tracks from API');
       }
       
-      // ✅ КЛЮЧЕВОЕ ИЗМЕНЕНИЕ: используем прямые URL
-      const processedTracks: Track[] = data.tracks.map((trackData, idx) => ({
+      const processedTracks: Track[] = data.tracks.map(trackData => ({
         id: trackData.id,
         title: trackData.title,
         artistId: trackData.artistId,
         albumName: trackData.albumName,
-        albumId: trackData.albumName || '', // Provide albumId, fallback to albumName or empty string
-        file: trackData.url, // ✅ Прямой URL из Blob Storage
-        duration: '0:00', // Будет обновлено асинхронно
-        number: idx + 1, // Assign a track number based on index
-        originalTitle: trackData.title, // Use title as originalTitle
+        file: trackData.url, // Прямой URL из Blob Storage
+        duration: '0:00',
         metadata: {
           pathname: trackData.pathname,
           fileName: trackData.fileName,

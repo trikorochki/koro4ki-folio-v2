@@ -6,10 +6,6 @@ import { Track } from '@/types/music';
 import { useMusicPlayer } from '@/lib/music-player';
 import { cn } from '@/lib/utils';
 
-// ================================================================================
-// TYPES & INTERFACES
-// ================================================================================
-
 interface PlayButtonProps {
   tracks: Track[];
   size?: 'small' | 'medium' | 'large';
@@ -20,10 +16,6 @@ interface PlayButtonProps {
 }
 
 type IconSize = 'small' | 'medium' | 'large';
-
-// ================================================================================
-// CONSTANTS
-// ================================================================================
 
 const SIZE_CLASSES = {
   small: 'w-8 h-8 text-xs',
@@ -57,10 +49,6 @@ const HEADER_CLASSES = [
   "cursor-pointer transition-all duration-150 hover:scale-105",
   "disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
 ].join(' ');
-
-// ================================================================================
-// MEMOIZED COMPONENTS
-// ================================================================================
 
 const PauseIcon = memo<{ iconSize: IconSize }>(({ iconSize }) => {
   const iconConfig = ICON_SIZES[iconSize];
@@ -97,10 +85,6 @@ const PlayIcon = memo<{ iconSize: IconSize; className?: string }>(({ iconSize, c
 
 PlayIcon.displayName = 'PlayIcon';
 
-// ================================================================================
-// MAIN COMPONENT
-// ================================================================================
-
 const PlayButton = memo<PlayButtonProps>(({
   tracks,
   size = 'medium',
@@ -119,10 +103,6 @@ const PlayButton = memo<PlayButtonProps>(({
     resumeTrack
   } = useMusicPlayer();
 
-  // ================================================================================
-  // MEMOIZED VALUES
-  // ================================================================================
-
   const isCurrentTrackInList = useMemo(() => {
     return currentTrack && tracks.some(track => track.id === currentTrack.id);
   }, [currentTrack, tracks]);
@@ -135,7 +115,6 @@ const PlayButton = memo<PlayButtonProps>(({
     return variant === 'default' && className?.includes('shadow-none');
   }, [variant, className]);
 
-  // Валидация треков
   const validTracks = useMemo(() => {
     return tracks.filter(track => 
       track && track.id && track.file && track.title
@@ -144,12 +123,7 @@ const PlayButton = memo<PlayButtonProps>(({
 
   const hasValidTracks = validTracks.length > 0;
 
-  // ================================================================================
-  // EVENT HANDLERS WITH useCallback
-  // ================================================================================
-
   const handlePlay = useCallback((e?: React.MouseEvent) => {
-    // Предотвращаем всплытие события
     if (e) {
       e.preventDefault();
       e.stopPropagation();
@@ -166,7 +140,6 @@ const PlayButton = memo<PlayButtonProps>(({
       } else if (isCurrentTrackInList && !isPlaying) {
         resumeTrack();
       } else {
-        // Начинаем воспроизведение с shuffle
         shuffleAndPlay(validTracks);
       }
     } catch (error) {
@@ -191,10 +164,6 @@ const PlayButton = memo<PlayButtonProps>(({
     setIsHovered(false);
   }, []);
 
-  // ================================================================================
-  // COMPUTED CLASSES WITH useMemo
-  // ================================================================================
-
   const buttonClasses = useMemo(() => {
     const sizeClass = SIZE_CLASSES[size];
     const shadowClass = shouldRemoveShadow ? '' : 'shadow-lg hover:shadow-xl';
@@ -210,19 +179,10 @@ const PlayButton = memo<PlayButtonProps>(({
     return showPause ? 'Pause music' : 'Play music';
   }, [variant, showPause]);
 
-  // ================================================================================
-  // RENDER CONDITIONS
-  // ================================================================================
-
   if (!hasValidTracks && !disabled) {
     console.warn('PlayButton: No valid tracks provided');
   }
 
-  // ================================================================================
-  // VARIANT RENDERERS
-  // ================================================================================
-
-  // Header variant
   if (variant === 'header') {
     return (
       <button
@@ -248,7 +208,6 @@ const PlayButton = memo<PlayButtonProps>(({
     );
   }
 
-  // Artist and Album variants
   if (variant === 'artist' || variant === 'album') {
     return (
       <button
@@ -269,7 +228,6 @@ const PlayButton = memo<PlayButtonProps>(({
     );
   }
 
-  // Default variant - overlay button
   return (
     <button
       className={buttonClasses}

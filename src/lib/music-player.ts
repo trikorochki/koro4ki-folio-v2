@@ -32,7 +32,7 @@ interface MusicPlayerStore extends PlayerState {
 // CONSTANTS
 // ================================================================================
 
-const DURATION_TIMEOUT = 8000; // Увеличен timeout до 8 секунд
+const DURATION_TIMEOUT = 8000;
 const ANALYTICS_TIMEOUT = 5000;
 
 // ================================================================================
@@ -46,9 +46,7 @@ const formatTime = (seconds: number): string => {
   return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
 };
 
-// ✅ ИЗМЕНЕНО: Упрощенная функция для получения URL трека
 const getTrackUrl = (track: Track): string => {
-  // Теперь track.file уже содержит прямой URL из Blob Storage
   console.log(`🎵 Getting track URL: ${track.file}`);
   return track.file;
 };
@@ -57,13 +55,11 @@ const getTrackUrl = (track: Track): string => {
 // ASYNC FUNCTIONS
 // ================================================================================
 
-// ✅ ОБНОВЛЕНО: Асинхронное получение длительности с прямыми URL
 const updateTrackDurationAsync = async (
   trackId: string, 
   track: Track, 
   updateFn: (id: string, duration: string) => void
 ): Promise<void> => {
-  // Проверяем кэш
   const cached = DurationCache.get(trackId);
   if (cached && cached !== '0:00') {
     updateFn(trackId, cached);
@@ -71,14 +67,12 @@ const updateTrackDurationAsync = async (
   }
 
   try {
-    // ✅ ИЗМЕНЕНО: используем прямой URL из Blob Storage
     const audioUrl = getTrackUrl(track);
     console.log(`⏱️ Loading duration for: ${track.title} from ${audioUrl}`);
     
     const audio = new Audio();
     audio.preload = 'metadata';
     
-    // Promise для обработки загрузки метаданных
     const loadPromise = new Promise<void>((resolve, reject) => {
       const handleLoadedMetadata = () => {
         if (!isNaN(audio.duration) && audio.duration > 0) {
@@ -100,7 +94,6 @@ const updateTrackDurationAsync = async (
       const cleanup = () => {
         audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
         audio.removeEventListener('error', handleError);
-        // Освобождаем ресурсы
         audio.src = '';
       };
 
@@ -108,16 +101,13 @@ const updateTrackDurationAsync = async (
       audio.addEventListener('error', handleError);
     });
 
-    // Timeout для предотвращения зависания
     const timeoutPromise = new Promise<void>((_, reject) => {
       setTimeout(() => {
         reject(new Error(`Timeout getting duration for track ${trackId}`));
       }, DURATION_TIMEOUT);
     });
 
-    // Устанавливаем источник и ждем результат
     audio.src = audioUrl;
-    
     await Promise.race([loadPromise, timeoutPromise]);
 
   } catch (error) {
@@ -125,7 +115,6 @@ const updateTrackDurationAsync = async (
   }
 };
 
-// Отправка аналитики с улучшенной обработкой ошибок
 const sendAnalytics = async (trackId: string, eventType: string = '30s_listen'): Promise<void> => {
   if (typeof window === 'undefined') return;
 
@@ -158,7 +147,6 @@ const sendAnalytics = async (trackId: string, eventType: string = '30s_listen'):
 // ================================================================================
 
 export const useMusicPlayer = create<MusicPlayerStore>((set, get) => ({
-  // Начальное состояние
   currentTrack: null,
   isPlaying: false,
   currentTime: 0,
@@ -168,10 +156,6 @@ export const useMusicPlayer = create<MusicPlayerStore>((set, get) => ({
   repeat: 'off',
   queue: [],
   currentIndex: 0,
-
-  // ================================================================================
-  // TRACK PLAYBACK ACTIONS
-  // ================================================================================
 
   playTrack: (track: Track) => {
     const { queue } = get();
@@ -186,13 +170,11 @@ export const useMusicPlayer = create<MusicPlayerStore>((set, get) => ({
       currentTime: 0,
     });
     
-    // ✅ ИЗМЕНЕНО: передаем весь объект track
     updateTrackDurationAsync(track.id, track, (trackId, duration) => {
       const { updateTrackDuration } = get();
       updateTrackDuration(trackId, duration);
     });
     
-    // Отправляем аналитику
     sendAnalytics(track.id);
   },
 
@@ -207,10 +189,6 @@ export const useMusicPlayer = create<MusicPlayerStore>((set, get) => ({
     }
   },
 
-  // ================================================================================
-  // NAVIGATION ACTIONS
-  // ================================================================================
-
   nextTrack: () => {
     const { queue, currentIndex, repeat } = get();
     
@@ -219,7 +197,6 @@ export const useMusicPlayer = create<MusicPlayerStore>((set, get) => ({
     let nextIndex = currentIndex + 1;
     
     if (repeat === 'one') {
-      // При repeat: 'one' перезапускаем текущий трек
       set({ currentTime: 0 });
       return;
     } else if (nextIndex >= queue.length) {
@@ -242,13 +219,11 @@ export const useMusicPlayer = create<MusicPlayerStore>((set, get) => ({
         currentTime: 0,
       });
       
-      // ✅ ИЗМЕНЕНО: передаем весь объект track
       updateTrackDurationAsync(nextTrack.id, nextTrack, (trackId, duration) => {
         const { updateTrackDuration } = get();
         updateTrackDuration(trackId, duration);
       });
       
-      // Отправляем аналитику
       sendAnalytics(nextTrack.id);
     }
   },
@@ -275,20 +250,14 @@ export const useMusicPlayer = create<MusicPlayerStore>((set, get) => ({
         currentTime: 0,
       });
       
-      // ✅ ИЗМЕНЕНО: передаем весь объект track
       updateTrackDurationAsync(prevTrack.id, prevTrack, (trackId, duration) => {
         const { updateTrackDuration } = get();
         updateTrackDuration(trackId, duration);
       });
       
-      // Отправляем аналитику
       sendAnalytics(prevTrack.id);
     }
   },
-
-  // ================================================================================
-  // PLAYER CONTROL ACTIONS
-  // ================================================================================
 
   setCurrentTime: (time: number) => {
     const validTime = Math.max(0, time);
@@ -312,10 +281,6 @@ export const useMusicPlayer = create<MusicPlayerStore>((set, get) => ({
   setRepeat: (repeat: 'off' | 'one' | 'all') => {
     set({ repeat });
   },
-
-  // ================================================================================
-  // QUEUE MANAGEMENT ACTIONS
-  // ================================================================================
   
   setQueue: (tracks: Track[]) => {
     if (tracks.length === 0) {
@@ -330,7 +295,7 @@ export const useMusicPlayer = create<MusicPlayerStore>((set, get) => ({
     }
     
     set({ 
-      queue: [...tracks], // Создаем копию массива
+      queue: [...tracks],
       currentIndex: 0,
       currentTime: 0
     });
@@ -339,7 +304,6 @@ export const useMusicPlayer = create<MusicPlayerStore>((set, get) => ({
   shuffleAndPlay: (tracks: Track[]) => {
     if (tracks.length === 0) return;
     
-    // Улучшенный shuffle алгоритм (Fisher-Yates)
     const shuffled = [...tracks];
     for (let i = shuffled.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -358,13 +322,11 @@ export const useMusicPlayer = create<MusicPlayerStore>((set, get) => ({
       shuffle: true,
     });
     
-    // ✅ ИЗМЕНЕНО: передаем весь объект track
     updateTrackDurationAsync(firstTrack.id, firstTrack, (trackId, duration) => {
       const { updateTrackDuration } = get();
       updateTrackDuration(trackId, duration);
     });
     
-    // Отправляем аналитику
     sendAnalytics(firstTrack.id);
   },
 
@@ -378,10 +340,6 @@ export const useMusicPlayer = create<MusicPlayerStore>((set, get) => ({
     });
   },
 
-  // ================================================================================
-  // UTILITY ACTIONS
-  // ================================================================================
-
   findTrackIndex: (trackId: string) => {
     const { queue } = get();
     return queue.findIndex(track => track.id === trackId);
@@ -389,20 +347,18 @@ export const useMusicPlayer = create<MusicPlayerStore>((set, get) => ({
 
   getAllTracks: () => {
     const { queue } = get();
-    return [...queue]; // Возвращаем копию для предотвращения мутации
+    return [...queue];
   },
 
   updateTrackDuration: (trackId: string, duration: string) => {
     const { currentTrack, queue } = get();
     
-    // Обновляем текущий трек
     if (currentTrack?.id === trackId) {
       set({
         currentTrack: { ...currentTrack, duration }
       });
     }
     
-    // Обновляем в очереди
     const updatedQueue = queue.map(track => 
       track.id === trackId ? { ...track, duration } : track
     );

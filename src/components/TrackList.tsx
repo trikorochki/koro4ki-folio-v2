@@ -11,20 +11,20 @@ interface TrackListProps {
   showArtist?: boolean;
 }
 
-// Функция для определения кириллицы
 function detectCyrillic(text?: string): boolean {
   if (!text) return false;
   return /[\u0400-\u04FF]/.test(text);
 }
 
-// ✅ ДОБАВЛЕНО: Функция для получения номера трека
 function getTrackNumber(track: Track, index: number): string {
-  // Пробуем получить номер из метаданных
   if (track.metadata?.number) {
     return track.metadata.number.toString();
   }
   
-  // Пробуем извлечь номер из названия файла
+  if (track.number) {
+    return track.number.toString();
+  }
+  
   if (track.metadata?.fileName) {
     const numberMatch = track.metadata.fileName.match(/^(\d{1,2})\./);
     if (numberMatch) {
@@ -32,39 +32,36 @@ function getTrackNumber(track: Track, index: number): string {
     }
   }
   
-  // Пробуем извлечь номер из самого названия трека
   const titleNumberMatch = track.title.match(/^(\d{1,2})\.\s*/);
   if (titleNumberMatch) {
     return titleNumberMatch[1];
   }
   
-  // Fallback к порядковому номеру в списке
   return (index + 1).toString();
 }
 
-// ✅ ДОБАВЛЕНО: Функция для получения оригинального названия
-function getOriginalTitle(track: Track): string | null {
-  // Пробуем получить из метаданных
+function getOriginalTitle(track: Track): string | undefined {
   if (track.metadata?.originalTitle) {
     return track.metadata.originalTitle;
   }
   
-  // Если название содержит номер, возвращаем версию без номера
+  if (track.originalTitle) {
+    return track.originalTitle;
+  }
+  
   const cleanTitle = track.title.replace(/^\d{1,2}[\s.\-_]*/, '').trim();
   if (cleanTitle !== track.title) {
     return cleanTitle;
   }
   
-  return null;
+  return undefined;
 }
 
-// ✅ ДОБАВЛЕНО: Функция для получения альбома
 function getAlbumName(track: Track): string {
   if (track.albumName) {
     return track.albumName;
   }
   
-  // Извлекаем из ID трека
   const parts = track.id.split('_');
   if (parts.length >= 3) {
     return parts.slice(1, -1).join(' ').replace(/_/g, ' ');
@@ -82,7 +79,6 @@ export default function TrackList({
   const { currentTrack, isPlaying, playTrack, pauseTrack, setQueue } = useMusicPlayer();
 
   const handleTrackClick = (track: Track) => {
-    // Устанавливаем очередь из текущего списка треков
     setQueue(tracks);
     
     if (currentTrack?.id === track.id) {
@@ -97,7 +93,6 @@ export default function TrackList({
   };
 
   const handleDoubleClick = (track: Track) => {
-    // При двойном клике всегда начинаем воспроизведение
     setQueue(tracks);
     playTrack(track);
   };
@@ -134,7 +129,6 @@ export default function TrackList({
             }`}
             title={`${track.title} - ${track.duration}`}
           >
-            {/* Track Number / Play State */}
             <div className="w-8 h-8 flex items-center justify-center text-sm font-bold">
               {isCurrentlyPlaying ? (
                 <div className="flex gap-0.5 items-end">
@@ -149,13 +143,11 @@ export default function TrackList({
                 <span className={`transition-colors ${
                   isActive ? 'text-black' : 'text-secondary-text-color group-hover:text-primary-text-color'
                 }`}>
-                  {/* ✅ ИСПРАВЛЕНО: Используем функцию getTrackNumber */}
                   {trackNumber}
                 </span>
               )}
             </div>
 
-            {/* Track Info */}
             <div className="flex-1 min-w-0">
               <h4 className={`font-bold truncate transition-colors ${
                 compact ? 'text-sm' : 'text-base'
@@ -169,11 +161,8 @@ export default function TrackList({
                 <p className={`text-xs truncate transition-colors ${
                   isActive ? 'text-black/70' : 'text-secondary-text-color'
                 } ${
-                  // ✅ ИСПРАВЛЕНО: Безопасный вызов с проверкой на null/undefined
                   detectCyrillic(originalTitle || '') ? 'font-cyrillic' : 'font-body'
-
                 }`}>
-                  {/* ✅ ИСПРАВЛЕНО: Используем функцию getOriginalTitle */}
                   {originalTitle || `Track ${trackNumber}`}
                 </p>
               )}
@@ -190,20 +179,17 @@ export default function TrackList({
                 <p className={`text-xs truncate transition-colors ${
                   isActive ? 'text-black/50' : 'text-secondary-text-color/70'
                 } font-body`}>
-                  {/* ✅ ИСПРАВЛЕНО: Используем функцию getAlbumName */}
                   {albumName}
                 </p>
               )}
             </div>
 
-            {/* Duration */}
             <div className={`text-sm font-mono transition-colors ${
               isActive ? 'text-black/70' : 'text-secondary-text-color group-hover:text-primary-text-color'
             }`}>
               {track.duration}
             </div>
 
-            {/* Hover Play Button */}
             {!isActive && (
               <div className="opacity-0 group-hover:opacity-100 transition-opacity">
                 <button
@@ -223,7 +209,6 @@ export default function TrackList({
         );
       })}
 
-      {/* ✅ ДОБАВЛЕНО: CSS для анимации эквалайзера */}
       <style jsx>{`
         .equalizer-bar {
           animation: equalizer 1.2s ease-in-out infinite;

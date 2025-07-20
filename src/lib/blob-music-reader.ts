@@ -6,7 +6,7 @@ import { ARTIST_DATA } from '@/data/artists';
 
 interface BlobFile {
   pathname: string;
-  url: string; // ✅ Прямой URL из Blob Storage
+  url: string;
   size: number;
   uploadedAt: Date;
 }
@@ -66,7 +66,7 @@ export async function generateBlobPlaylistData(): Promise<PlaylistData> {
           id: `${artistId}_${cleanName.replace(/\s+/g, '_')}`,
           title: cleanName,
           type: releaseType,
-          cover: '', // Будет найдена ниже
+          cover: undefined, // Будет найдена ниже
           tracks: [],
           artistId: artistId,
         };
@@ -76,20 +76,21 @@ export async function generateBlobPlaylistData(): Promise<PlaylistData> {
         );
 
         const audioFiles = sortedFiles.filter(file => 
-          /\.(mp3|wav|flac|m4a)$/i.test(file.pathname)
+          /\.(mp3|wav|flac|m4a|ogg)$/i.test(file.pathname)
         );
 
-        // ✅ ИСПРАВЛЕНО: Поиск обложки среди файлов
+        // Поиск обложки среди файлов
         const coverFile = sortedFiles.find(file => {
           const fileName = file.pathname.split('/').pop()?.toLowerCase() || '';
           return fileName === 'cover.jpg' || 
                  fileName === 'cover.jpeg' || 
                  fileName === 'cover.png' ||
+                 fileName === 'cover.webp' ||
                  fileName === 'folder.jpg' ||
                  fileName === 'albumart.jpg';
         });
 
-        // ✅ КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: Используем прямой URL из Blob Storage для обложки
+        // Используем прямой URL из Blob Storage для обложки
         if (coverFile) {
           album.cover = coverFile.url;
           console.log(`  🖼️ Found cover: ${coverFile.pathname}`);
@@ -97,6 +98,7 @@ export async function generateBlobPlaylistData(): Promise<PlaylistData> {
           console.log(`  ⚠️ No cover found for ${releaseFolderName}`);
         }
 
+        // Обработка аудиофайлов
         for (let i = 0; i < audioFiles.length; i++) {
           const file = audioFiles[i];
           const fileName = file.pathname.split('/').pop() || '';
@@ -107,12 +109,12 @@ export async function generateBlobPlaylistData(): Promise<PlaylistData> {
             ? trackNumber 
             : i + 1;
 
-          // ✅ КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: Используем прямой URL из Blob Storage для аудио
+          // Используем прямой URL из Blob Storage для аудио
           const track: Track = {
-            id: `${artistId}_${cleanName}_${finalTrackNumber}`,
+            id: `${artistId}_${cleanName.replace(/\s+/g, '_')}_${finalTrackNumber}`,
             title: cleanTitle,
-            file: file.url, // ✅ Прямой URL вместо API пути
-            duration: '0:00',
+            file: file.url, // Прямой URL из Blob Storage
+            duration: '0:00', // Будет обновлено при воспроизведении
             artistId: artistId,
             albumName: cleanName,
             number: finalTrackNumber,
@@ -132,6 +134,7 @@ export async function generateBlobPlaylistData(): Promise<PlaylistData> {
           console.log(`    🎵 Added track: ${cleanTitle} -> ${file.url}`);
         }
 
+        // Сортировка треков по номерам
         album.tracks.sort((a, b) => {
           const aNumber = a.number || 0;
           const bNumber = b.number || 0;
@@ -176,7 +179,7 @@ async function listBlobFiles(): Promise<BlobFile[]> {
 
     return blobs.map(blob => ({
       pathname: blob.pathname,
-      url: blob.url, // ✅ Сохраняем прямой URL
+      url: blob.url,
       size: blob.size,
       uploadedAt: blob.uploadedAt,
     }));
@@ -268,14 +271,24 @@ function parseTrackNumberAndTitle(filename: string): {
     /^(\d{1,2})[\s\.\-_]+(.+)$/,
     /^Track[\s]*(\d{1,2})[\s\.\-_]*(.+)$/,
     /^(\d{1,2})([A-Za-z].+)$/,
-    /^(\d{1,2})$/
+    /^(\d{1,2})$/,
+    /^V\d+_(.+)$/ // Для версий треков типа V1_название, V2_название
   ];
   
   for (const pattern of patterns) {
     const match = title.trim().match(pattern);
     if (match) {
-      const num = parseInt(match[1]);
-      let cleanTitle = match[2]?.trim() || title;
+      let num: number;
+      let cleanTitle: string;
+      
+      if (pattern.source.includes('V\\d+_')) {
+        // Для версий треков берем номер из позиции в файле
+        cleanTitle = match[1]?.trim() || title;
+        num = 1; // Будет перезаписан в основной функции
+      } else {
+        num = parseInt(match[1]);
+        cleanTitle = match[2]?.trim() || title;
+      }
       
       cleanTitle = cleanTitle.replace(/^[\s\.\-_]+/, '');
       

@@ -11,9 +11,8 @@ import TrackList from '@/components/TrackList';
 import AlbumCarousel from '@/components/AlbumCarousel';
 import PlayButton from '@/components/PlayButton';
 import { useMusicPlayer } from '@/lib/music-player';
-import { useTracks } from '@/hooks/useTracks'; // ✅ ДОБАВЛЕНО
+import { useTracks } from '@/hooks/useTracks';
 
-// Функция для определения кириллицы
 function detectCyrillic(text: string): boolean {
   return /[\u0400-\u04FF]/.test(text);
 }
@@ -29,11 +28,9 @@ export default function ArtistPage() {
   const [showDiscography, setShowDiscography] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // ✅ ДОБАВЛЕНО: Используем новую систему загрузки треков
   const { tracks: allBlobTracks, loading: tracksLoading } = useTracks();
   const { setQueue, playTrack, shuffleAndPlay } = useMusicPlayer();
 
-  // ✅ ДОБАВЛЕНО: Фильтруем треки для текущего артиста
   const artistTracks = useMemo(() => {
     return allBlobTracks.filter(track => track.artistId === artistId);
   }, [allBlobTracks, artistId]);
@@ -44,7 +41,6 @@ export default function ArtistPage() {
         setLoading(true);
         setError(null);
         
-        // Проверяем, что артист существует в ARTIST_DATA
         if (!ARTIST_DATA[artistId as keyof typeof ARTIST_DATA]) {
           setError(`Artist "${artistId}" not found`);
           return;
@@ -59,7 +55,6 @@ export default function ArtistPage() {
           if (artistData) {
             setArtist(artistData);
           } else {
-            // ✅ ИСПРАВЛЕНО: Создаем базовую структуру артиста
             const artistInfo = ARTIST_DATA[artistId as keyof typeof ARTIST_DATA];
             setArtist({
               id: artistId,
@@ -90,7 +85,6 @@ export default function ArtistPage() {
     }
   }, [artistId]);
 
-  // ✅ ДОБАВЛЕНО: Обработчики для воспроизведения треков
   const handlePlayAllTracks = () => {
     if (artistTracks.length > 0) {
       setQueue(artistTracks);
@@ -104,7 +98,6 @@ export default function ArtistPage() {
     }
   };
 
-  // Состояние загрузки
   if (loading || tracksLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -116,7 +109,6 @@ export default function ArtistPage() {
     );
   }
 
-  // Состояние ошибки
   if (error || !artist) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -135,17 +127,13 @@ export default function ArtistPage() {
     );
   }
 
-  // Безопасное получение данных с fallback
   const currentAlbums = (artist[activeTab] as Album[]) || [];
-  
-  // ✅ ИЗМЕНЕНО: Используем треки из Blob Storage вместо playlist API
   const allTracks = artistTracks;
   const tracksToShow = showAllTracks ? allTracks : allTracks.slice(0, 10);
   const totalReleases = (artist.Albums?.length || 0) + (artist.EPs?.length || 0) + (artist.Demos?.length || 0);
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* Заголовок артиста */}
       <div className="mb-8">
         <Link 
           href="/" 
@@ -175,7 +163,6 @@ export default function ArtistPage() {
           </div>
         </div>
 
-        {/* ✅ ДОБАВЛЕНО: Кнопки воспроизведения */}
         {allTracks.length > 0 && (
           <div className="flex gap-4 mb-6">
             <PlayButton 
@@ -194,12 +181,13 @@ export default function ArtistPage() {
         )}
       </div>
 
-      {/* ✅ ОБНОВЛЕНО: Секция All Tracks с треками из Blob Storage */}
       {allTracks.length > 0 && (
         <div className="mb-12">
           <h2 className="text-2xl font-bold mb-4">All Tracks</h2>
           <TrackList 
             tracks={tracksToShow}
+            showArtist={false}
+            showAlbumInfo={true}
           />
           
           {allTracks.length > 10 && (
@@ -215,7 +203,6 @@ export default function ArtistPage() {
         </div>
       )}
 
-      {/* Секция Discography */}
       {totalReleases > 0 && (
         <div className="mb-12">
           <div className="flex items-center justify-between mb-6">
@@ -230,7 +217,6 @@ export default function ArtistPage() {
 
           {showDiscography && (
             <>
-              {/* Tabs */}
               <div className="flex gap-4 mb-6">
                 {(['Albums', 'EPs', 'Demos'] as const).map((tab) => {
                   const count = artist[tab]?.length || 0;
@@ -253,7 +239,6 @@ export default function ArtistPage() {
                 })}
               </div>
 
-              {/* Content */}
               {currentAlbums.length > 0 ? (
                 <AlbumCarousel albums={currentAlbums} />
               ) : (
@@ -266,7 +251,6 @@ export default function ArtistPage() {
         </div>
       )}
 
-      {/* Секция Other Artists */}
       <div className="mb-12">
         <h2 className="text-2xl font-bold mb-6">Other Artists</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
@@ -293,7 +277,6 @@ export default function ArtistPage() {
         </div>
       </div>
 
-      {/* ✅ ДОБАВЛЕНО: Debug информация */}
       {process.env.NODE_ENV === 'development' && (
         <div className="mt-12 p-4 bg-gray-800 rounded-lg text-sm">
           <div className="font-bold mb-2">Debug Info:</div>
