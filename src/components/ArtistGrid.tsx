@@ -11,9 +11,79 @@ interface ArtistGridProps {
   artists: Artist[];
 }
 
-function detectCyrillic(text: string): boolean {
+// ✅ ДОБАВЛЕНО: Функция проверки валидности аватара
+function hasValidAvatar(artist: Artist): boolean {
+  return artist.avatar !== undefined && 
+         artist.avatar !== null && 
+         artist.avatar.trim() !== '';
+}
+
+// ✅ ДОБАВЛЕНО: Функция получения аватара с fallback
+function getArtistAvatar(artist: Artist): string {
+  if (hasValidAvatar(artist)) {
+    return artist.avatar!;
+  }
+  // Fallback к дефолтному аватару
+  return '/images/default-artist-avatar.jpg';
+}
+
+// ✅ ИСПРАВЛЕНО: Безопасная проверка кириллицы
+function detectCyrillic(text?: string): boolean {
+  if (!text) return false;
   return /[\u0400-\u04FF]/.test(text);
 }
+
+// ✅ ДОБАВЛЕНО: Компонент placeholder для отсутствующих аватаров
+const ArtistAvatarPlaceholder = ({ name }: { name: string }) => (
+  <div className="w-full h-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+    <div className="text-white text-4xl font-bold">
+      {name.charAt(0).toUpperCase()}
+    </div>
+  </div>
+);
+
+// ✅ ДОБАВЛЕНО: Компонент аватара артиста с fallback логикой
+const ArtistAvatar = ({ 
+  artist, 
+  className,
+  priority = false 
+}: { 
+  artist: Artist; 
+  className?: string;
+  priority?: boolean;
+}) => {
+  const avatarSrc = getArtistAvatar(artist);
+  const isDefaultAvatar = !hasValidAvatar(artist);
+
+  if (isDefaultAvatar) {
+    return (
+      <div className={className}>
+        <ArtistAvatarPlaceholder name={artist.name} />
+      </div>
+    );
+  }
+
+  return (
+    <Image
+      src={avatarSrc}
+      alt={`Аватар ${artist.name}`}
+      width={192}
+      height={192}
+      className={className}
+      priority={priority}
+      onError={(e) => {
+        console.warn(`Failed to load avatar for ${artist.name}: ${avatarSrc}`);
+        // При ошибке загрузки показываем placeholder
+        const target = e.target as HTMLImageElement;
+        target.style.display = 'none';
+        const placeholder = target.parentElement?.querySelector('.avatar-placeholder');
+        if (placeholder) {
+          placeholder.classList.remove('hidden');
+        }
+      }}
+    />
+  );
+};
 
 export default function ArtistGrid({ artists }: ArtistGridProps) {
   const { currentTrack, isPlaying } = useMusicPlayer();
@@ -52,14 +122,18 @@ export default function ArtistGrid({ artists }: ArtistGridProps) {
           >
             <div className="flex flex-col items-center text-center h-full justify-center">
               <div className="artist-image-container relative w-48 h-48 mb-4 rounded-full overflow-hidden flex-shrink-0">
-                <Image
-                  src={artist.avatar}
-                  alt={`Аватар ${artist.name}`}
-                  width={192}
-                  height={192}
+                
+                {/* ✅ ИСПРАВЛЕНО: Используем компонент ArtistAvatar */}
+                <ArtistAvatar
+                  artist={artist}
                   className="w-full h-full object-cover"
                   priority={artists.indexOf(artist) < 3}
                 />
+                
+                {/* ✅ ДОБАВЛЕНО: Скрытый placeholder для ошибок загрузки */}
+                <div className="avatar-placeholder hidden absolute inset-0">
+                  <ArtistAvatarPlaceholder name={artist.name} />
+                </div>
                 
                 <div 
                   className="hover-overlay absolute inset-0 flex items-center justify-center rounded-full overflow-hidden transition-colors duration-300"
@@ -76,7 +150,6 @@ export default function ArtistGrid({ artists }: ArtistGridProps) {
                     />
                   </div>
                 </div>
-
               </div>
               
               <div className="flex flex-col items-center max-w-full">
@@ -84,11 +157,21 @@ export default function ArtistGrid({ artists }: ArtistGridProps) {
                   {artist.name}
                 </h3>
                 
-                <p className={`text-secondary-text-color text-sm line-clamp-3 leading-relaxed text-center ${
-                  detectCyrillic(artist.descriptionLine1) ? 'font-cyrillic' : 'font-body'
-                }`}>
-                  {artist.descriptionLine1}
-                </p>
+                {/* ✅ ИСПРАВЛЕНО: Безопасная обработка descriptionLine1 */}
+                {artist.descriptionLine1 && (
+                  <p className={`text-secondary-text-color text-sm line-clamp-3 leading-relaxed text-center ${
+                    detectCyrillic(artist.descriptionLine1) ? 'font-cyrillic' : 'font-body'
+                  }`}>
+                    {artist.descriptionLine1}
+                  </p>
+                )}
+                
+                {/* ✅ ДОБАВЛЕНО: Fallback для отсутствующего описания */}
+                {!artist.descriptionLine1 && (
+                  <p className="text-secondary-text-color text-sm line-clamp-3 leading-relaxed text-center font-body opacity-70">
+                    Musical artist
+                  </p>
+                )}
               </div>
             </div>
 
