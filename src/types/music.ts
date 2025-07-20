@@ -1,20 +1,26 @@
-// src/types/music.ts - ИСПРАВЛЕНО
+// src/types/music.ts
 export interface Track {
   id: string;
-  number: number;
   title: string;
-  originalTitle: string;
-  file: string;
+  file: string; // ✅ Прямой URL из Blob Storage
   duration: string;
-  albumId: string;
   artistId: string;
+  albumName?: string;
+  metadata?: {
+    pathname: string;
+    fileName: string;
+    size: number;
+    uploadedAt: string;
+    number?: number;
+    originalTitle?: string;
+  };
 }
 
 export interface Album {
   id: string;
   title: string;
   type: 'Albums' | 'EPs' | 'Demos';
-  cover: string;
+  cover?: string;
   tracks: Track[];
   artistId: string;
 }
@@ -22,18 +28,18 @@ export interface Album {
 export interface Artist {
   id: string;
   name: string;
-  avatar: string;
-  descriptionLine1: string;
-  descriptionLine2: string;
-  socialLinks: {
+  avatar?: string;
+  descriptionLine1?: string;
+  descriptionLine2?: string;
+  socialLinks?: {
     telegram?: string;
     vk?: string;
     youtube?: string;
     soundcloud?: string;
   };
-  Albums: Album[];     // ✅ Исправлено: заглавная буква
-  EPs: Album[];        // ✅ Исправлено: заглавная буква  
-  Demos: Album[];      // ✅ Исправлено: заглавная буква
+  Albums: Album[];
+  EPs: Album[];
+  Demos: Album[];
 }
 
 export interface PlaylistData {
@@ -61,4 +67,23 @@ export interface AnalyticsEvent {
   device: string;
   os: string;
   browser: string;
+}
+
+// ✅ НОВЫЕ ИНТЕРФЕЙСЫ для работы с Blob Storage
+export interface BlobTrackData {
+  id: string;
+  pathname: string;
+  url: string;
+  artistId: string;
+  albumName: string;
+  fileName: string;
+  title: string;
+  size: number;
+  uploadedAt: string;
+}
+
+export interface BlobResponse {
+  success: boolean;
+  total: number;
+  tracks: BlobTrackData[];
 }

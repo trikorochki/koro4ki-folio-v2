@@ -46,21 +46,18 @@ const formatTime = (seconds: number): string => {
   return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
 };
 
-// Создание правильного URL для аудиофайла
-const createAudioUrl = (track: Track): string => {
-  if (track.file.startsWith('/api/music/') || track.file.startsWith('http')) {
-    return track.file;
-  }
-  
-  // Если file содержит относительный путь, строим API URL
-  return `/api/music/${track.file}`;
+// ✅ ИЗМЕНЕНО: Упрощенная функция для получения URL трека
+const getTrackUrl = (track: Track): string => {
+  // Теперь track.file уже содержит прямой URL из Blob Storage
+  console.log(`🎵 Getting track URL: ${track.file}`);
+  return track.file;
 };
 
 // ================================================================================
 // ASYNC FUNCTIONS
 // ================================================================================
 
-// Улучшенное асинхронное получение длительности трека
+// ✅ ОБНОВЛЕНО: Асинхронное получение длительности с прямыми URL
 const updateTrackDurationAsync = async (
   trackId: string, 
   track: Track, 
@@ -74,7 +71,10 @@ const updateTrackDurationAsync = async (
   }
 
   try {
-    const audioUrl = createAudioUrl(track);
+    // ✅ ИЗМЕНЕНО: используем прямой URL из Blob Storage
+    const audioUrl = getTrackUrl(track);
+    console.log(`⏱️ Loading duration for: ${track.title} from ${audioUrl}`);
+    
     const audio = new Audio();
     audio.preload = 'metadata';
     
@@ -177,6 +177,8 @@ export const useMusicPlayer = create<MusicPlayerStore>((set, get) => ({
     const { queue } = get();
     const trackIndex = queue.findIndex(t => t.id === track.id);
     
+    console.log(`🎵 Playing track: ${track.title} from ${getTrackUrl(track)}`);
+    
     set({
       currentTrack: track,
       isPlaying: true,
@@ -184,7 +186,7 @@ export const useMusicPlayer = create<MusicPlayerStore>((set, get) => ({
       currentTime: 0,
     });
     
-    // Асинхронно получаем длительность
+    // ✅ ИЗМЕНЕНО: передаем весь объект track
     updateTrackDurationAsync(track.id, track, (trackId, duration) => {
       const { updateTrackDuration } = get();
       updateTrackDuration(trackId, duration);
@@ -231,6 +233,8 @@ export const useMusicPlayer = create<MusicPlayerStore>((set, get) => ({
     
     const nextTrack = queue[nextIndex];
     if (nextTrack) {
+      console.log(`⏭️ Next track: ${nextTrack.title}`);
+      
       set({
         currentIndex: nextIndex,
         currentTrack: nextTrack,
@@ -238,7 +242,7 @@ export const useMusicPlayer = create<MusicPlayerStore>((set, get) => ({
         currentTime: 0,
       });
       
-      // Получаем длительность нового трека
+      // ✅ ИЗМЕНЕНО: передаем весь объект track
       updateTrackDurationAsync(nextTrack.id, nextTrack, (trackId, duration) => {
         const { updateTrackDuration } = get();
         updateTrackDuration(trackId, duration);
@@ -262,6 +266,8 @@ export const useMusicPlayer = create<MusicPlayerStore>((set, get) => ({
     
     const prevTrack = queue[prevIndex];
     if (prevTrack) {
+      console.log(`⏮️ Previous track: ${prevTrack.title}`);
+      
       set({
         currentIndex: prevIndex,
         currentTrack: prevTrack,
@@ -269,7 +275,7 @@ export const useMusicPlayer = create<MusicPlayerStore>((set, get) => ({
         currentTime: 0,
       });
       
-      // Получаем длительность предыдущего трека
+      // ✅ ИЗМЕНЕНО: передаем весь объект track
       updateTrackDurationAsync(prevTrack.id, prevTrack, (trackId, duration) => {
         const { updateTrackDuration } = get();
         updateTrackDuration(trackId, duration);
@@ -341,6 +347,7 @@ export const useMusicPlayer = create<MusicPlayerStore>((set, get) => ({
     }
     
     const firstTrack = shuffled[0];
+    console.log(`🔀 Shuffle play starting with: ${firstTrack.title}`);
     
     set({
       queue: shuffled,
@@ -351,7 +358,7 @@ export const useMusicPlayer = create<MusicPlayerStore>((set, get) => ({
       shuffle: true,
     });
     
-    // Получаем длительность первого трека
+    // ✅ ИЗМЕНЕНО: передаем весь объект track
     updateTrackDurationAsync(firstTrack.id, firstTrack, (trackId, duration) => {
       const { updateTrackDuration } = get();
       updateTrackDuration(trackId, duration);
