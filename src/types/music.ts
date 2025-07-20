@@ -6,6 +6,9 @@ export interface Track {
   duration: string;
   artistId: string;
   albumName?: string;
+  number?: number; // ✅ ДОБАВЛЕНО: Номер трека
+  originalTitle?: string; // ✅ ДОБАВЛЕНО: Оригинальное название
+  albumId?: string; // ✅ ДОБАВЛЕНО: ID альбома
   metadata?: {
     pathname: string;
     fileName: string;

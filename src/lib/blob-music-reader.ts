@@ -111,7 +111,13 @@ export async function generateBlobPlaylistData(): Promise<PlaylistData> {
           }
         }
 
-        album.tracks.sort((a, b) => a.number - b.number);
+        // ✅ ИСПРАВЛЕНО: Безопасная сортировка с проверкой типов
+        album.tracks.sort((a, b) => {
+          const aNumber = a.number || 0;
+          const bNumber = b.number || 0;
+          return aNumber - bNumber;
+        });
+
 
         if (album.tracks.length > 0) {
           artists[artistId][releaseType].push(album);
