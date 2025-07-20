@@ -9,27 +9,6 @@ import { ARTIST_DATA } from '@/data/artists';
 import { useTracks } from '@/hooks/useTracks';
 import { useMusicPlayer } from '@/lib/music-player';
 
-// ================================================================================
-// INTERFACES AND TYPES
-// ================================================================================
-
-interface HomePageStats {
-  totalArtists: number;
-  totalReleases: number;
-  totalTracks: number;
-  loadingTime: number;
-}
-
-interface ErrorState {
-  playlistError: string | null;
-  tracksError: string | null;
-  hasAnyError: boolean;
-}
-
-// ================================================================================
-// MAIN COMPONENT WITH ENHANCED OPTIMIZATION
-// ================================================================================
-
 export default function HomePage() {
   const [playlistData, setPlaylistData] = useState<PlaylistData>({});
   const [loading, setLoading] = useState(true);
@@ -40,60 +19,45 @@ export default function HomePage() {
   const { tracks, loading: tracksLoading, error: tracksError, refetch: refetchTracks } = useTracks();
   const { setQueue, playTrack, shuffleAndPlay } = useMusicPlayer();
 
-  // ================================================================================
-  // MEMOIZED VALUES
-  // ================================================================================
-
-  const errorState = useMemo<ErrorState>(() => ({
+  // ✅ ИСПРАВЛЕНО: Простые memoized значения без циклических зависимостей
+  const errorState = useMemo(() => ({
     playlistError: error,
     tracksError: tracksError,
     hasAnyError: Boolean(error || tracksError)
   }), [error, tracksError]);
 
   const artists = useMemo(() => {
+    if (!playlistData || typeof playlistData !== 'object') return [];
+    
     return Object.keys(ARTIST_DATA)
       .map(artistId => playlistData[artistId])
-      .filter((artist): artist is Artist => Boolean(artist));
+      .filter((artist): artist is Artist => Boolean(artist && artist.id && artist.name));
   }, [playlistData]);
-
-  const stats = useMemo<HomePageStats>(() => {
-    const totalReleases = artists.reduce((sum, artist) => 
-      sum + artist.Albums.length + artist.EPs.length + artist.Demos.length, 0
-    );
-    
-    return {
-      totalArtists: artists.length,
-      totalReleases,
-      totalTracks: tracks.length,
-      loadingTime: loading ? 0 : Date.now() - loadStartTime
-    };
-  }, [artists, tracks.length, loading, loadStartTime]);
 
   const isLoading = useMemo(() => loading || tracksLoading, [loading, tracksLoading]);
 
-  // ================================================================================
-  // ENHANCED DATA FETCHING
-  // ================================================================================
+  // ✅ ИСПРАВЛЕНО: Убираем сложные вычисления из useMemo
+  const totalArtists = artists.length;
+  const totalTracks = tracks.length;
+  const loadingTime = loading ? 0 : Date.now() - loadStartTime;
 
+  // ✅ ИСПРАВЛЕНО: Упрощаем fetchPlaylistData
   const fetchPlaylistData = useCallback(async () => {
     try {
       setError(null);
-      console.log('🔍 Fetching playlist data from /api/playlist...');
+      console.log('🔍 Fetching playlist data...');
       
       const response = await fetch('/api/playlist', {
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json'
         },
-        // Добавляем таймаут
-        signal: AbortSignal.timeout(15000)
       });
       
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ Playlist data received:', Object.keys(data).length, 'artists');
+        console.log('✅ Playlist data received');
         
-        // Создаем структуру данных с информацией из ARTIST_DATA
         const filteredData: PlaylistData = {};
         
         Object.keys(ARTIST_DATA).forEach(artistId => {
@@ -115,11 +79,9 @@ export default function HomePage() {
         });
         
         setPlaylistData(filteredData);
-        console.log('📊 Processed playlist data for', Object.keys(filteredData).length, 'artists');
         
       } else {
-        const errorText = await response.text().catch(() => 'Unknown error');
-        throw new Error(`HTTP ${response.status}: ${response.statusText} - ${errorText}`);
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
       
     } catch (fetchError: unknown) {
@@ -127,7 +89,7 @@ export default function HomePage() {
       console.error('❌ Error fetching playlist data:', fetchError);
       setError(errorMessage);
       
-      // Создаем fallback структуру с пустыми релизами
+      // Fallback data
       const fallbackData: PlaylistData = {};
       Object.keys(ARTIST_DATA).forEach(artistId => {
         const artistInfo = ARTIST_DATA[artistId as keyof typeof ARTIST_DATA];
@@ -147,15 +109,10 @@ export default function HomePage() {
       });
       
       setPlaylistData(fallbackData);
-      console.log('📝 Created fallback data structure');
     } finally {
       setLoading(false);
     }
-  }, []);
-
-  // ================================================================================
-  // ENHANCED PLAYBACK HANDLERS
-  // ================================================================================
+  }, []); // ✅ Пустой массив зависимостей
 
   const handlePlayAllTracks = useCallback(() => {
     if (tracks.length === 0) {
@@ -166,14 +123,6 @@ export default function HomePage() {
     console.log(`🎵 Playing all tracks (${tracks.length} tracks)`);
     shuffleAndPlay(tracks);
   }, [tracks, shuffleAndPlay]);
-
-  const handlePlayFirstTrack = useCallback(() => {
-    if (tracks.length === 0) return;
-    
-    console.log('🎵 Playing first track');
-    setQueue(tracks);
-    playTrack(tracks[0]);
-  }, [tracks, setQueue, playTrack]);
 
   const handleRefreshData = useCallback(async () => {
     console.log('🔄 Refreshing all data...');
@@ -190,18 +139,11 @@ export default function HomePage() {
     }
   }, [fetchPlaylistData, refetchTracks]);
 
-  // ================================================================================
-  // EFFECTS
-  // ================================================================================
-
   useEffect(() => {
     fetchPlaylistData();
   }, [fetchPlaylistData]);
 
-  // ================================================================================
-  // LOADING STATE
-  // ================================================================================
-
+  // ✅ ИСПРАВЛЕНО: Упрощенные условия рендеринга
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -210,24 +152,15 @@ export default function HomePage() {
           <div className="text-xl mb-2">Loading music universe...</div>
           <div className="text-sm text-gray-400">
             {loading && !tracksLoading && 'Loading playlist data...'}
-            {!loading && tracksLoading && 'Loading tracks from Blob Storage...'}
-            {loading && tracksLoading && 'Loading all music data...'}
-          </div>
-          <div className="mt-4">
-            <div className="w-48 h-2 bg-gray-700 rounded-full overflow-hidden mx-auto">
-              <div className="h-full bg-gradient-to-r from-purple-400 to-pink-600 animate-pulse"></div>
-            </div>
+            {!loading && tracksLoading && 'Loading tracks...'}
+            {loading && tracksLoading && 'Loading all data...'}
           </div>
         </div>
       </div>
     );
   }
 
-  // ================================================================================
-  // ERROR STATE
-  // ================================================================================
-
-  if (errorState.hasAnyError && tracks.length === 0 && artists.length === 0) {
+  if (errorState.hasAnyError && totalTracks === 0 && totalArtists === 0) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center max-w-md">
@@ -254,13 +187,8 @@ export default function HomePage() {
     );
   }
 
-  // ================================================================================
-  // SUCCESS STATE WITH PARTIAL ERRORS
-  // ================================================================================
-
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* Header Section */}
       <div className="text-center mb-12">
         <h1 className="text-6xl font-bold mb-4 bg-gradient-to-r from-purple-400 to-pink-600 bg-clip-text text-transparent">
           Six worlds.
@@ -269,125 +197,45 @@ export default function HomePage() {
           One universe
         </p>
         
-        {/* Play Controls */}
-        {tracks.length > 0 && (
+        {totalTracks > 0 && (
           <div className="mb-8 space-y-4">
-            <div className="flex justify-center gap-4">
-              <PlayButton 
-                tracks={tracks}
-                variant="header"
-                size="large"
-                showText
-              />
-              
-              <button
-                onClick={handlePlayFirstTrack}
-                className="bg-transparent border-2 border-accent-color text-accent-color hover:bg-accent-color hover:text-black px-6 py-3 rounded-full font-bold transition-all duration-150 hover:scale-105"
-              >
-                ▶️ Play First
-              </button>
-            </div>
+            <PlayButton 
+              tracks={tracks}
+              variant="header"
+              size="large"
+              showText
+            />
             
             <div className="text-sm text-gray-400 space-y-1">
-              <div>{stats.totalTracks} track{stats.totalTracks !== 1 ? 's' : ''} available</div>
-              <div>{stats.totalArtists} artist{stats.totalArtists !== 1 ? 's' : ''} • {stats.totalReleases} release{stats.totalReleases !== 1 ? 's' : ''}</div>
+              <div>{totalTracks} track{totalTracks !== 1 ? 's' : ''} available</div>
+              <div>{totalArtists} artist{totalArtists !== 1 ? 's' : ''}</div>
             </div>
-          </div>
-        )}
-        
-        {tracks.length === 0 && !errorState.hasAnyError && (
-          <div className="mb-8 p-4 bg-yellow-900/20 border border-yellow-600/30 rounded-lg">
-            <div className="text-yellow-400 mb-2">⚠️ No tracks loaded</div>
-            <div className="text-sm text-gray-400">Music data is being processed or unavailable</div>
           </div>
         )}
       </div>
 
-      {/* Error Notifications */}
-      {errorState.hasAnyError && (tracks.length > 0 || artists.length > 0) && (
-        <div className="mb-8 p-4 bg-orange-900/20 border border-orange-600/30 rounded-lg">
-          <div className="text-orange-400 mb-2 font-bold">⚠️ Partial Loading Issues</div>
-          <div className="text-sm text-gray-300 space-y-1">
-            {errorState.playlistError && (
-              <div>• Playlist API error: {errorState.playlistError}</div>
-            )}
-            {errorState.tracksError && (
-              <div>• Blob Storage error: {errorState.tracksError}</div>
-            )}
-            <div className="mt-2">
-              <button
-                onClick={handleRefreshData}
-                className="text-accent-color hover:text-green-400 underline"
-              >
-                🔄 Try reloading
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Artists Grid */}
-      {artists.length > 0 ? (
+      {totalArtists > 0 ? (
         <ArtistGrid artists={artists} />
       ) : (
         <div className="text-center py-12">
           <div className="text-4xl mb-4 opacity-50">🎤</div>
           <div className="text-gray-400 text-lg mb-2">No artists available</div>
-          <div className="text-sm text-gray-500">
-            {errorState.hasAnyError 
-              ? 'Unable to load artist data due to connection issues'
-              : 'Artist data is being processed'
-            }
-          </div>
         </div>
       )}
       
-      {/* Debug Information */}
       {process.env.NODE_ENV === 'development' && (
         <div className="mt-12 p-4 bg-gray-800 rounded-lg text-sm font-mono">
           <div className="font-bold mb-3 text-accent-color">🔧 Debug Information</div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <div className="text-gray-400 mb-2">Data Status:</div>
-              <div>Artists loaded: {stats.totalArtists}</div>
-              <div>Releases loaded: {stats.totalReleases}</div>
-              <div>Tracks loaded: {stats.totalTracks}</div>
-              <div>Loading time: {stats.loadingTime}ms</div>
+              <div>Artists loaded: {totalArtists}</div>
+              <div>Tracks loaded: {totalTracks}</div>
+              <div>Loading time: {loadingTime}ms</div>
             </div>
             <div>
-              <div className="text-gray-400 mb-2">API Status:</div>
               <div>Playlist API: {errorState.playlistError ? '❌' : '✅'}</div>
               <div>Blob Storage: {errorState.tracksError ? '❌' : '✅'}</div>
-              <div>Artists data: {artists.length > 0 ? '✅' : '❌'}</div>
-              <div>Tracks data: {tracks.length > 0 ? '✅' : '❌'}</div>
             </div>
-          </div>
-          
-          {errorState.hasAnyError && (
-            <div className="mt-4 p-3 bg-red-900/20 border border-red-600/30 rounded">
-              <div className="text-red-400 text-xs">Error Details:</div>
-              {errorState.playlistError && (
-                <div className="text-red-300 text-xs mt-1">Playlist: {errorState.playlistError}</div>
-              )}
-              {errorState.tracksError && (
-                <div className="text-red-300 text-xs mt-1">Tracks: {errorState.tracksError}</div>
-              )}
-            </div>
-          )}
-          
-          <div className="mt-4 flex gap-2">
-            <button
-              onClick={handleRefreshData}
-              className="px-3 py-1 bg-blue-600 hover:bg-blue-500 rounded text-xs"
-            >
-              🔄 Refresh All
-            </button>
-            <button
-              onClick={() => window.location.reload()}
-              className="px-3 py-1 bg-gray-600 hover:bg-gray-500 rounded text-xs"
-            >
-              🔄 Hard Refresh
-            </button>
           </div>
         </div>
       )}

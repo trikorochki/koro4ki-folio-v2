@@ -60,16 +60,16 @@ interface UseTracksOptions {
 
 const DEFAULT_OPTIONS: UseTracksOptions = {
   enableAutoRefresh: false,
-  refreshInterval: 300000, // 5 минут
+  refreshInterval: 300000,
   retryOnError: true,
   maxRetries: 3
 };
 
-const FETCH_TIMEOUT = 15000; // 15 секунд
-const RETRY_DELAY = 1000; // 1 секунда
+const FETCH_TIMEOUT = 15000;
+const RETRY_DELAY = 1000;
 
 // ================================================================================
-// MAIN HOOK WITH ENHANCED FUNCTIONALITY
+// MAIN HOOK WITH CORRECTED ORDER
 // ================================================================================
 
 export const useTracks = (options: UseTracksOptions = {}) => {
@@ -81,24 +81,7 @@ export const useTracks = (options: UseTracksOptions = {}) => {
   const [retryCount, setRetryCount] = useState(0);
   const [lastFetchTime, setLastFetchTime] = useState<number | null>(null);
 
-  // ================================================================================
-  // MEMOIZED VALUES
-  // ================================================================================
-
-  const returnValue = useMemo<UseTracksReturn>(() => ({
-    tracks,
-    loading,
-    error,
-    refetch: loadTracks,
-    totalTracks: tracks.length,
-    hasError: Boolean(error),
-    isReady: !loading && tracks.length > 0 && !error
-  }), [tracks, loading, error, tracks.length]);
-
-  // ================================================================================
-  // ENHANCED TRACK LOADING WITH RETRY LOGIC
-  // ================================================================================
-
+  // ✅ ИСПРАВЛЕНО: Объявляем loadTracks ПЕРЕД использованием в useMemo
   const loadTracks = useCallback(async (): Promise<void> => {
     const attemptLoad = async (attempt: number = 1): Promise<void> => {
       try {
@@ -108,9 +91,8 @@ export const useTracks = (options: UseTracksOptions = {}) => {
           setRetryCount(0);
         }
         
-        console.log(`🔄 Loading tracks from Blob Storage... (attempt ${attempt}/${config.maxRetries! + 1})`);
+        console.log(`🔄 Loading tracks (attempt ${attempt}/${config.maxRetries! + 1})`);
         
-        // Create AbortController for timeout
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
         
@@ -131,53 +113,44 @@ export const useTracks = (options: UseTracksOptions = {}) => {
         const data: BlobResponse = await response.json();
         
         if (!data.success) {
-          // ✅ ИСПРАВЛЕНО: Безопасная проверка error
-          throw new Error(data.error || 'Failed to load tracks from API');
+          throw new Error(data.error || 'Failed to load tracks');
         }
 
-        // Enhanced track processing with validation
         const processedTracks: Track[] = data.tracks
           .filter(trackData => {
             if (!trackData.id || !trackData.title || !trackData.url) {
-              console.warn('⚠️ Skipping invalid track data:', trackData);
+              console.warn('⚠️ Skipping invalid track:', trackData);
               return false;
             }
             return true;
           })
           .map(trackData => {
-            // Enhanced track mapping with all required fields
             const track: Track = {
               id: trackData.id,
               title: trackData.title,
               artistId: trackData.artistId,
               albumName: trackData.albumName,
-              file: trackData.url, // Прямой URL из Blob Storage
-              // ✅ ИСПРАВЛЕНО: Безопасная проверка duration
+              file: trackData.url,
               duration: trackData.duration || '0:00',
-              // ✅ ИСПРАВЛЕНО: Безопасная проверка опциональных полей
-              number: trackData.number || undefined,
-              originalTitle: trackData.originalTitle || undefined,
-              albumId: trackData.albumId || undefined,
+              number: trackData.number,
+              originalTitle: trackData.originalTitle,
+              albumId: trackData.albumId,
               metadata: {
                 pathname: trackData.pathname,
                 fileName: trackData.fileName,
                 size: trackData.size,
                 uploadedAt: trackData.uploadedAt,
-                // ✅ ИСПРАВЛЕНО: Безопасная проверка опциональных полей в metadata
-                number: trackData.number || undefined,
-                originalTitle: trackData.originalTitle || undefined
+                number: trackData.number,
+                originalTitle: trackData.originalTitle
               }
             };
             
             return track;
           });
         
-        console.log(`✅ Successfully loaded ${processedTracks.length} tracks`);
-        // ✅ ИСПРАВЛЕНО: Безопасная проверка debug информации
+        console.log(`✅ Loaded ${processedTracks.length} tracks`);
         if (data.debug) {
-          console.log(`📊 Debug info:`, data.debug);
-        } else {
-          console.log('📊 No debug info available');
+          console.log(`📊 Debug:`, data.debug);
         }
         
         setTracks(processedTracks);
@@ -187,21 +160,15 @@ export const useTracks = (options: UseTracksOptions = {}) => {
         
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-        console.error(`❌ Failed to load tracks (attempt ${attempt}):`, errorMessage);
+        console.error(`❌ Load failed (attempt ${attempt}):`, errorMessage);
         
-        // Handle different error types
-        if (err instanceof Error) {
-          if (err.name === 'AbortError') {
-            console.warn('⏱️ Request timeout - server may be slow');
-          } else if (errorMessage.includes('NetworkError') || errorMessage.includes('Failed to fetch')) {
-            console.warn('🌐 Network connectivity issue');
-          }
+        if (err instanceof Error && err.name === 'AbortError') {
+          console.warn('⏱️ Request timeout');
         }
         
-        // Retry logic
         if (config.retryOnError && attempt <= config.maxRetries!) {
-          const delay = RETRY_DELAY * attempt; // Exponential backoff
-          console.log(`🔄 Retrying in ${delay}ms... (${attempt}/${config.maxRetries})`);
+          const delay = RETRY_DELAY * attempt;
+          console.log(`🔄 Retrying in ${delay}ms...`);
           
           setRetryCount(attempt);
           
@@ -211,9 +178,8 @@ export const useTracks = (options: UseTracksOptions = {}) => {
             }, delay);
           });
         } else {
-          // Final failure
           setError(errorMessage);
-          setTracks([]); // Clear any existing tracks on error
+          setTracks([]);
         }
       } finally {
         setLoading(false);
@@ -223,18 +189,29 @@ export const useTracks = (options: UseTracksOptions = {}) => {
     return attemptLoad();
   }, [config.retryOnError, config.maxRetries]);
 
+  // ✅ ИСПРАВЛЕНО: Теперь useMemo может безопасно использовать loadTracks
+  const returnValue = useMemo<UseTracksReturn>(() => ({
+    tracks,
+    loading,
+    error,
+    refetch: loadTracks, // ✅ Функция уже объявлена выше
+    totalTracks: tracks.length,
+    hasError: Boolean(error),
+    isReady: !loading && tracks.length > 0 && !error
+  }), [tracks, loading, error, loadTracks]);
+
   // ================================================================================
-  // AUTO-REFRESH FUNCTIONALITY
+  // AUTO-REFRESH
   // ================================================================================
 
   useEffect(() => {
     let intervalId: NodeJS.Timeout;
     
     if (config.enableAutoRefresh && config.refreshInterval && !loading && !error) {
-      console.log(`🔄 Auto-refresh enabled (every ${config.refreshInterval / 1000}s)`);
+      console.log(`🔄 Auto-refresh enabled (${config.refreshInterval / 1000}s)`);
       
       intervalId = setInterval(() => {
-        console.log('🔄 Auto-refreshing tracks...');
+        console.log('🔄 Auto-refreshing...');
         loadTracks();
       }, config.refreshInterval);
     }
@@ -242,33 +219,25 @@ export const useTracks = (options: UseTracksOptions = {}) => {
     return () => {
       if (intervalId) {
         clearInterval(intervalId);
-        console.log('🛑 Auto-refresh disabled');
       }
     };
   }, [config.enableAutoRefresh, config.refreshInterval, loading, error, loadTracks]);
 
   // ================================================================================
-  // INITIAL LOAD EFFECT
+  // INITIAL LOAD
   // ================================================================================
 
   useEffect(() => {
     loadTracks();
-  }, []); // Запускаем только один раз при монтировании
-
-  // ================================================================================
-  // RETURN ENHANCED INTERFACE
-  // ================================================================================
+  }, []); // ✅ Пустые зависимости - загружаем только при монтировании
 
   return returnValue;
 };
 
 // ================================================================================
-// SPECIALIZED HOOKS FOR DIFFERENT USE CASES
+// SPECIALIZED HOOKS
 // ================================================================================
 
-/**
- * Hook для загрузки треков с auto-refresh для real-time приложений
- */
 export const useTracksWithAutoRefresh = (refreshInterval: number = 300000) => {
   return useTracks({
     enableAutoRefresh: true,
@@ -278,9 +247,6 @@ export const useTracksWithAutoRefresh = (refreshInterval: number = 300000) => {
   });
 };
 
-/**
- * Hook для загрузки треков без retry (для случаев где нужна быстрая отдача)
- */
 export const useTracksNoRetry = () => {
   return useTracks({
     retryOnError: false,
@@ -288,9 +254,6 @@ export const useTracksNoRetry = () => {
   });
 };
 
-/**
- * Hook для агрессивной загрузки треков с множественными попытками
- */
 export const useTracksRobust = () => {
   return useTracks({
     retryOnError: true,
@@ -299,21 +262,15 @@ export const useTracksRobust = () => {
 };
 
 // ================================================================================
-// UTILITY FUNCTIONS FOR EXTERNAL USE
+// UTILITY FUNCTIONS
 // ================================================================================
 
-/**
- * Утилита для фильтрации треков по артисту
- */
 export const filterTracksByArtist = (tracks: Track[], artistId: string): Track[] => {
   return tracks.filter(track => 
     track.artistId?.toLowerCase() === artistId.toLowerCase()
   );
 };
 
-/**
- * Утилита для группировки треков по альбомам
- */
 export const groupTracksByAlbum = (tracks: Track[]): Record<string, Track[]> => {
   return tracks.reduce((acc, track) => {
     const albumKey = track.albumName || 'Unknown Album';
@@ -325,9 +282,6 @@ export const groupTracksByAlbum = (tracks: Track[]): Record<string, Track[]> => 
   }, {} as Record<string, Track[]>);
 };
 
-/**
- * Утилита для сортировки треков по номеру
- */
 export const sortTracksByNumber = (tracks: Track[]): Track[] => {
   return [...tracks].sort((a, b) => {
     const aNumber = a.number || 0;

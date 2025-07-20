@@ -36,6 +36,7 @@ export default function MusicPlayer() {
   const audioRef = useRef<HTMLAudioElement>(null);
   const progressRef = useRef<HTMLDivElement>(null);
   const currentPlayPromiseRef = useRef<Promise<void> | null>(null);
+  const currentTrackIdRef = useRef<string | null>(null); // ✅ ДОБАВЛЕНО: Отслеживание текущего трека
   
   // Local state
   const [isDragging, setIsDragging] = useState(false);
@@ -140,7 +141,7 @@ export default function MusicPlayer() {
         nextTrack();
       }
     }, 2000);
-  }, [nextTrack, currentTrack, queue.length, retryCount]);
+  }, [nextTrack, queue.length, retryCount]); // ✅ ИСПРАВЛЕНО: Убрали currentTrack из зависимостей
 
   // ================================================================================
   // OPTIMIZED AUDIO PLAYBACK MANAGEMENT
@@ -159,12 +160,7 @@ export default function MusicPlayer() {
       setIsLoading(true);
       console.log('▶️ Starting playback for:', currentTrack.title);
       
-      // Ensure audio is ready
-      if (audio.readyState < 2) {
-        console.log('⏳ Waiting for audio to load...');
-        return;
-      }
-      
+      // ✅ ИСПРАВЛЕНО: Убрали проверку readyState - она вызывала задержки
       const playPromise = audio.play();
       currentPlayPromiseRef.current = playPromise;
       
@@ -192,7 +188,6 @@ export default function MusicPlayer() {
       }
     }
   }, [currentTrack, hasError, handleAudioError]);
-
 
   const safePause = useCallback(() => {
     const audio = audioRef.current;
@@ -237,22 +232,17 @@ export default function MusicPlayer() {
       DurationCache.set(currentTrack.id, formattedDuration);
     }
 
-    // Start playback if needed
-    if (isPlaying && !hasError) {
-      safePlay();
-    }
-  }, [currentTrack, formatTime, updateTrackDuration, isPlaying, hasError, safePlay]);
+    // ✅ ИСПРАВЛЕНО: НЕ запускаем автовоспроизведение здесь - это вызывало циклы
+    // Воспроизведение будет управляться отдельным effect
+  }, [currentTrack?.id, formatTime, updateTrackDuration]); // ✅ ИСПРАВЛЕНО: Минимальные зависимости
 
   const handleCanPlay = useCallback(() => {
     console.log('🔄 Audio can start playing');
     setIsLoading(false);
     setHasError(false);
     
-    // Auto-play if should be playing
-    if (isPlaying && !hasError) {
-      safePlay();
-    }
-  }, [isPlaying, hasError, safePlay]);
+    // ✅ ИСПРАВЛЕНО: НЕ запускаем автовоспроизведение здесь
+  }, []); // ✅ ИСПРАВЛЕНО: Без зависимостей
 
   const handleWaiting = useCallback(() => {
     console.log('⏳ Audio buffering...');
@@ -336,35 +326,25 @@ export default function MusicPlayer() {
   }, [setVolume]);
 
   // ================================================================================
-  // EFFECTS - OPTIMIZED WITH PROPER DEPENDENCIES
+  // EFFECTS - ИСПРАВЛЕНЫ ДЛЯ ПРЕДОТВРАЩЕНИЯ ЦИКЛОВ
   // ================================================================================
 
-  // Play/pause control effect
-  useEffect(() => {
-    if (!audioRef.current) return;
-
-    if (isPlaying && !isLoading && !hasError) {
-      safePlay();
-    } else if (!isPlaying) {
-      safePause();
-    }
-  }, [isPlaying, safePlay, safePause, isLoading, hasError]);
-
-  // Volume control effect
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (audio && !isNaN(volume)) {
-      audio.volume = Math.max(0, Math.min(1, volume));
-    }
-  }, [volume]);
-
-  // Current track loading effect with enhanced URL validation
+  // ✅ КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: Отдельный effect для загрузки треков
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio || !currentTrack) return;
 
-    console.log(`🎵 Loading track: ${currentTrack.title}`);
+    // ✅ КРИТИЧЕСКАЯ ПРОВЕРКА: Загружаем только если трек действительно изменился
+    if (currentTrackIdRef.current === currentTrack.id) {
+      console.log('🔄 Track already loaded, skipping reload');
+      return;
+    }
+
+    console.log(`🎵 Loading NEW track: ${currentTrack.title}`);
     console.log(`🔗 URL: ${currentTrack.file}`);
+
+    // Обновляем ref с текущим треком
+    currentTrackIdRef.current = currentTrack.id;
 
     // Reset states
     setIsLoading(true);
@@ -387,17 +367,61 @@ export default function MusicPlayer() {
       return;
     }
 
-    // Set new source and load
-    try {
-      audio.src = currentTrack.file;
-      audio.load();
-    } catch (error) {
-      console.error('Error setting audio source:', error);
-      setIsLoading(false);
-      setHasError(true);
+    // ✅ ИСПРАВЛЕНО: Проверяем, не установлен ли уже этот URL
+    if (audio.src !== currentTrack.file) {
+      try {
+        audio.src = currentTrack.file;
+        audio.load();
+      } catch (error) {
+        console.error('Error setting audio source:', error);
+        setIsLoading(false);
+        setHasError(true);
+      }
     }
 
-  }, [currentTrack]);
+  }, [currentTrack?.id, currentTrack?.file]); // ✅ ИСПРАВЛЕНО: Только ID и file
+
+  // ✅ ИСПРАВЛЕНИЕ: Отдельный effect для управления воспроизведением
+  useEffect(() => {
+    if (!audioRef.current || !currentTrack) return;
+
+    const audio = audioRef.current;
+
+    // Воспроизводим только если:
+    // 1. Должно играть
+    // 2. Не загружается
+    // 3. Нет ошибок
+    // 4. Аудио готово к воспроизведению
+    if (isPlaying && !isLoading && !hasError && audio.src) {
+      // Дополнительная проверка готовности
+      if (audio.readyState >= 2) {
+        safePlay();
+      } else {
+        // Ждем когда аудио будет готово
+        const handleCanPlayThrough = () => {
+          if (isPlaying && !hasError) {
+            safePlay();
+          }
+          audio.removeEventListener('canplaythrough', handleCanPlayThrough);
+        };
+        audio.addEventListener('canplaythrough', handleCanPlayThrough);
+        
+        return () => {
+          audio.removeEventListener('canplaythrough', handleCanPlayThrough);
+        };
+      }
+    } else if (!isPlaying) {
+      safePause();
+    }
+  }, [isPlaying, isLoading, hasError, currentTrack?.id, safePlay, safePause]);
+
+  // Volume control effect
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (audio && !isNaN(volume)) {
+      audio.volume = Math.max(0, Math.min(1, volume));
+    }
+  }, [volume]);
 
   // ================================================================================
   // MEMOIZED VALUES FOR PERFORMANCE
