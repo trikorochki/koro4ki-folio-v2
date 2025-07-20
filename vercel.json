@@ -64,18 +64,15 @@
   "functions": {
     "src/app/api/music/[...path]/route.ts": {
       "maxDuration": 30,
-      "memory": 1024,
-      "regions": ["cle1", "iad1"]
+      "memory": 1024
     },
     "src/app/api/blob/list/route.ts": {
       "maxDuration": 25,
-      "memory": 512,
-      "regions": ["cle1", "iad1"]
+      "memory": 512
     },
     "src/app/api/stats/route.ts": {
       "maxDuration": 20,
-      "memory": 256,
-      "regions": ["cle1", "iad1"]
+      "memory": 256
     }
   },
 
