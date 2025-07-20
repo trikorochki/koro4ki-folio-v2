@@ -113,7 +113,11 @@ export async function generatePlaylistData(): Promise<PlaylistData> {
         
         // Сортируем треки в каждом альбоме
         releases.forEach(album => {
-          album.tracks.sort((a, b) => a.number - b.number);
+            album.tracks.sort((a, b) => {
+              const aNumber = a.number || 0;
+              const bNumber = b.number || 0;
+              return aNumber - bNumber;
+            });
         });
         
         // Удаляем альбомы без треков
