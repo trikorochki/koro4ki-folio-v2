@@ -188,6 +188,71 @@ window.artistData = {
         ],
         "demos": []
     },
+    "jahkorochki": {
+        "name": "JAHKORO4KI",
+        "image": "images/jahkorochki.jpg",
+        "description_line1": "Reggae-trap-industrial chaos with Balkan soul.",
+        "description_line2": "From Sarajevo streets to global bureaucratic beats.",
+        "albums": [
+            {
+                "name": "Deportation from the country of refugees",
+                "cover": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/jahkorochki/Album. Deportation from the country of refugees/cover.jpg",
+                "tracks": [
+                    {
+                        "num": 1,
+                        "title": "Mouse caught the cat",
+                        "originalTitle": "01 Mouse caught the cat",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/jahkorochki/Album. Deportation from the country of refugees/01 Mouse caught the cat.mp3",
+                        "duration": 342
+                    },
+                    {
+                        "num": 2,
+                        "title": "Kicked Out of Safe Haven",
+                        "originalTitle": "02 Kicked Out of Safe Haven",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/jahkorochki/Album. Deportation from the country of refugees/02 Kicked Out of Safe Haven.mp3",
+                        "duration": 449
+                    },
+                    {
+                        "num": 3,
+                        "title": "Refugee Status - Denied by Refugees",
+                        "originalTitle": "03 Refugee Status - Denied by Refugees",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/jahkorochki/Album. Deportation from the country of refugees/03 Refugee Status - Denied by Refugees.mp3",
+                        "duration": 337
+                    },
+                    {
+                        "num": 4,
+                        "title": "My own atom",
+                        "originalTitle": "04 My own atom",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/jahkorochki/Album. Deportation from the country of refugees/04 My own atom.mp3",
+                        "duration": 329
+                    },
+                    {
+                        "num": 5,
+                        "title": "Cross and Bill",
+                        "originalTitle": "05 Cross and Bill",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/jahkorochki/Album. Deportation from the country of refugees/05 Cross and Bill.mp3",
+                        "duration": 339
+                    },
+                    {
+                        "num": 6,
+                        "title": "Obi Van Vladimir",
+                        "originalTitle": "06 Obi Van Vladimir",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/jahkorochki/Album. Deportation from the country of refugees/06 Obi Van Vladimir.mp3",
+                        "duration": 357
+                    },
+                    {
+                        "num": 7,
+                        "title": "My own atom remix",
+                        "originalTitle": "07 My own atom remix",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/jahkorochki/Album. Deportation from the country of refugees/07 My own atom remix.mp3",
+                        "duration": 391
+                    }
+                ]
+            }
+        ],
+        "eps": [],
+        "demos": []
+    },
     "nukorochki": {
         "name": "NÜKORO4KI",
         "image": "images/nukorochki.jpg",
