@@ -20,6 +20,23 @@ function detectCyrillic(text: string): boolean {
   return /[\u0400-\u04FF]/.test(text);
 }
 
+// ✅ ДОБАВЛЕНО: Функция для проверки валидности обложки
+function hasValidCover(album: Album): boolean {
+  return album.cover !== undefined && 
+         album.cover !== null && 
+         album.cover.trim() !== '';
+}
+
+// ✅ ДОБАВЛЕНО: Компонент placeholder для отсутствующих обложек
+const AlbumCoverPlaceholder = ({ title }: { title: string }) => (
+  <div className="w-full h-full bg-gray-700 rounded-lg flex items-center justify-center">
+    <div className="text-center text-gray-400">
+      <div className="text-4xl mb-2">🎵</div>
+      <div className="text-xs px-2">{title}</div>
+    </div>
+  </div>
+);
+
 export default function AlbumCarousel({ 
   albums, 
   layout = 'vertical',
@@ -27,6 +44,7 @@ export default function AlbumCarousel({
   maxTracksPreview = 5
 }: AlbumCarouselProps) {
   const [expandedAlbums, setExpandedAlbums] = useState<Set<string>>(new Set());
+  const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
   const { currentTrack, isPlaying } = useMusicPlayer();
 
   const toggleAlbumExpansion = (albumId: string) => {
@@ -37,6 +55,49 @@ export default function AlbumCarousel({
       newExpanded.add(albumId);
     }
     setExpandedAlbums(newExpanded);
+  };
+
+  // ✅ ДОБАВЛЕНО: Обработчик ошибок загрузки изображений
+  const handleImageError = (albumId: string, coverUrl: string) => {
+    console.warn(`Failed to load album cover for ${albumId}: ${coverUrl}`);
+    setFailedImages(prev => new Set(prev).add(albumId));
+  };
+
+  // ✅ ДОБАВЛЕНО: Компонент обложки альбома с fallback логикой
+  const AlbumCover = ({ 
+    album, 
+    className, 
+    width = 200, 
+    height = 200 
+  }: { 
+    album: Album; 
+    className?: string;
+    width?: number;
+    height?: number;
+  }) => {
+    const hasCover = hasValidCover(album) && !failedImages.has(album.id);
+    
+    if (!hasCover) {
+      return (
+        <div className={className}>
+          <AlbumCoverPlaceholder title={album.title} />
+        </div>
+      );
+    }
+
+    return (
+      <Image
+        src={album.cover!} // Используем ! так как проверили выше
+        alt={`${album.title} album cover`}
+        width={width}
+        height={height}
+        className={className}
+        loading="lazy"
+        placeholder="blur"
+        blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
+        onError={() => handleImageError(album.id, album.cover!)}
+      />
+    );
   };
 
   if (albums.length === 0) {
@@ -66,14 +127,14 @@ export default function AlbumCarousel({
                 className="bg-card-bg-color hover:bg-card-hover-bg-color rounded-lg p-4 transition-all duration-200 hover:scale-105 group min-w-[280px] max-w-[280px]"
               >
                 <div className="relative mb-4">
-                  <Image
-                    src={album.cover}
-                    alt={album.title}
-                    width={200}
-                    height={200}
+                  {/* ✅ ИСПРАВЛЕНО: Используем компонент AlbumCover */}
+                  <AlbumCover
+                    album={album}
                     className="w-full h-48 rounded-lg object-cover"
-                    loading="lazy"
+                    width={280}
+                    height={192}
                   />
+                  
                   <div className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                     <PlayButton
                       tracks={album.tracks}
@@ -137,14 +198,14 @@ export default function AlbumCarousel({
             <div className="flex flex-col lg:flex-row gap-6">
               {/* Album Cover */}
               <div className="flex-shrink-0 relative group">
-                <Image
-                  src={album.cover}
-                  alt={album.title}
+                {/* ✅ ИСПРАВЛЕНО: Используем компонент AlbumCover */}
+                <AlbumCover
+                  album={album}
+                  className="w-48 h-48 rounded-lg object-cover shadow-lg"
                   width={200}
                   height={200}
-                  className="w-48 h-48 rounded-lg object-cover shadow-lg"
-                  loading="lazy"
                 />
+                
                 <div className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                   <PlayButton
                     tracks={album.tracks}
