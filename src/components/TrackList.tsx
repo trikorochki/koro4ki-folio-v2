@@ -8,14 +8,77 @@ interface TrackListProps {
   tracks: Track[];
   showAlbumInfo?: boolean;
   compact?: boolean;
+  showArtist?: boolean;
 }
 
 // Функция для определения кириллицы
-function detectCyrillic(text: string): boolean {
+function detectCyrillic(text?: string): boolean {
+  if (!text) return false;
   return /[\u0400-\u04FF]/.test(text);
 }
 
-export default function TrackList({ tracks, showAlbumInfo = false, compact = false }: TrackListProps) {
+// ✅ ДОБАВЛЕНО: Функция для получения номера трека
+function getTrackNumber(track: Track, index: number): string {
+  // Пробуем получить номер из метаданных
+  if (track.metadata?.number) {
+    return track.metadata.number.toString();
+  }
+  
+  // Пробуем извлечь номер из названия файла
+  if (track.metadata?.fileName) {
+    const numberMatch = track.metadata.fileName.match(/^(\d{1,2})\./);
+    if (numberMatch) {
+      return numberMatch[1];
+    }
+  }
+  
+  // Пробуем извлечь номер из самого названия трека
+  const titleNumberMatch = track.title.match(/^(\d{1,2})\.\s*/);
+  if (titleNumberMatch) {
+    return titleNumberMatch[1];
+  }
+  
+  // Fallback к порядковому номеру в списке
+  return (index + 1).toString();
+}
+
+// ✅ ДОБАВЛЕНО: Функция для получения оригинального названия
+function getOriginalTitle(track: Track): string | null {
+  // Пробуем получить из метаданных
+  if (track.metadata?.originalTitle) {
+    return track.metadata.originalTitle;
+  }
+  
+  // Если название содержит номер, возвращаем версию без номера
+  const cleanTitle = track.title.replace(/^\d{1,2}[\s.\-_]*/, '').trim();
+  if (cleanTitle !== track.title) {
+    return cleanTitle;
+  }
+  
+  return null;
+}
+
+// ✅ ДОБАВЛЕНО: Функция для получения альбома
+function getAlbumName(track: Track): string {
+  if (track.albumName) {
+    return track.albumName;
+  }
+  
+  // Извлекаем из ID трека
+  const parts = track.id.split('_');
+  if (parts.length >= 3) {
+    return parts.slice(1, -1).join(' ').replace(/_/g, ' ');
+  }
+  
+  return 'Unknown Album';
+}
+
+export default function TrackList({ 
+  tracks, 
+  showAlbumInfo = false, 
+  compact = false,
+  showArtist = false 
+}: TrackListProps) {
   const { currentTrack, isPlaying, playTrack, pauseTrack, setQueue } = useMusicPlayer();
 
   const handleTrackClick = (track: Track) => {
@@ -42,7 +105,10 @@ export default function TrackList({ tracks, showAlbumInfo = false, compact = fal
   if (tracks.length === 0) {
     return (
       <div className="text-center py-8 text-secondary-text-color">
-        <p className="font-body">No tracks available</p>
+        <div className="space-y-2">
+          <div className="text-4xl opacity-50">🎵</div>
+          <p className="font-body">No tracks available</p>
+        </div>
       </div>
     );
   }
@@ -52,6 +118,9 @@ export default function TrackList({ tracks, showAlbumInfo = false, compact = fal
       {tracks.map((track, index) => {
         const isActive = currentTrack?.id === track.id;
         const isCurrentlyPlaying = isActive && isPlaying;
+        const trackNumber = getTrackNumber(track, index);
+        const originalTitle = getOriginalTitle(track);
+        const albumName = getAlbumName(track);
 
         return (
           <div
@@ -80,7 +149,8 @@ export default function TrackList({ tracks, showAlbumInfo = false, compact = fal
                 <span className={`transition-colors ${
                   isActive ? 'text-black' : 'text-secondary-text-color group-hover:text-primary-text-color'
                 }`}>
-                  {track.number}
+                  {/* ✅ ИСПРАВЛЕНО: Используем функцию getTrackNumber */}
+                  {trackNumber}
                 </span>
               )}
             </div>
@@ -99,9 +169,20 @@ export default function TrackList({ tracks, showAlbumInfo = false, compact = fal
                 <p className={`text-xs truncate transition-colors ${
                   isActive ? 'text-black/70' : 'text-secondary-text-color'
                 } ${
-                  detectCyrillic(track.originalTitle) ? 'font-cyrillic' : 'font-body'
+                  // ✅ ИСПРАВЛЕНО: Безопасный вызов с проверкой на null/undefined
+                  detectCyrillic(originalTitle || '') ? 'font-cyrillic' : 'font-body'
+
                 }`}>
-                  {track.originalTitle !== track.title ? track.originalTitle : `Track ${track.number}`}
+                  {/* ✅ ИСПРАВЛЕНО: Используем функцию getOriginalTitle */}
+                  {originalTitle || `Track ${trackNumber}`}
+                </p>
+              )}
+              
+              {showArtist && (
+                <p className={`text-xs truncate transition-colors ${
+                  isActive ? 'text-black/50' : 'text-secondary-text-color/70'
+                } font-body`}>
+                  {track.artistId}
                 </p>
               )}
               
@@ -109,7 +190,8 @@ export default function TrackList({ tracks, showAlbumInfo = false, compact = fal
                 <p className={`text-xs truncate transition-colors ${
                   isActive ? 'text-black/50' : 'text-secondary-text-color/70'
                 } font-body`}>
-                  Album • {track.albumId}
+                  {/* ✅ ИСПРАВЛЕНО: Используем функцию getAlbumName */}
+                  {albumName}
                 </p>
               )}
             </div>
@@ -131,6 +213,7 @@ export default function TrackList({ tracks, showAlbumInfo = false, compact = fal
                   }}
                   className="w-8 h-8 bg-accent-color hover:bg-green-400 text-black rounded-full flex items-center justify-center transition-all hover:scale-110"
                   title="Play track"
+                  aria-label={`Play ${track.title}`}
                 >
                   <div className="w-0 h-0 border-l-[6px] border-l-black border-t-[4px] border-t-transparent border-b-[4px] border-b-transparent ml-0.5" />
                 </button>
@@ -139,6 +222,38 @@ export default function TrackList({ tracks, showAlbumInfo = false, compact = fal
           </div>
         );
       })}
+
+      {/* ✅ ДОБАВЛЕНО: CSS для анимации эквалайзера */}
+      <style jsx>{`
+        .equalizer-bar {
+          animation: equalizer 1.2s ease-in-out infinite;
+        }
+        
+        .animation-delay-0 {
+          animation-delay: 0s;
+        }
+        
+        .animation-delay-100 {
+          animation-delay: 0.1s;
+        }
+        
+        .animation-delay-200 {
+          animation-delay: 0.2s;
+        }
+        
+        .animation-delay-300 {
+          animation-delay: 0.3s;
+        }
+        
+        @keyframes equalizer {
+          0%, 100% {
+            transform: scaleY(1);
+          }
+          50% {
+            transform: scaleY(0.5);
+          }
+        }
+      `}</style>
     </div>
   );
 }
