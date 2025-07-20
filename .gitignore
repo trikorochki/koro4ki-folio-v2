@@ -1,51 +1,68 @@
-# Dependencies
+# ================================================================================
+# DEPENDENCIES
+# ================================================================================
 node_modules/
 /.pnp
 .pnp.js
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp.*
 
-# Testing
-/coverage
-
-# Next.js
+# ================================================================================
+# NEXT.JS BUILD FILES
+# ================================================================================
 /.next/
 /out/
 next-env.d.ts
+.next
+/.next
+out
+out/
 
-# Production
+# Production build
 /build
+build/
+dist/
 
-# Misc
-.DS_Store
-*.pem
-Thumbs.db
-
-# Debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Local env files
+# ================================================================================
+# ENVIRONMENT FILES (КРИТИЧНО ДЛЯ БЕЗОПАСНОСТИ)
+# ================================================================================
 .env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+.env.*.local
 
-# Vercel
-.vercel
+# Дополнительные файлы окружения
+.env.example
+.env.sample
+*.env
 
-# TypeScript
-*.tsbuildinfo
+# ================================================================================
+# TESTING AND COVERAGE
+# ================================================================================
+/coverage
+coverage/
+.coverage
+.nyc_output
+*.lcov
 
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
+# Jest
+jest.config.js.backup
+__tests__/__snapshots__/
 
-# Logs
+# ================================================================================
+# LOGS AND DEBUG FILES
+# ================================================================================
 logs
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
 
 # Runtime data
 pids
@@ -53,14 +70,85 @@ pids
 *.seed
 *.pid.lock
 
-# Optional npm cache directory
-.npm
+# ================================================================================
+# OPERATING SYSTEM FILES
+# ================================================================================
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 
-# Optional eslint cache
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+# *~
+
+# ================================================================================
+# IDE AND EDITOR FILES
+# ================================================================================
+# VSCode
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# JetBrains IDEs
+.idea/
+*.swp
+*.swo
+*.iml
+*.ipr
+*.iws
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+
+# ================================================================================
+# CACHE DIRECTORIES
+# ================================================================================
+# npm
+.npm
+npm-debug.log*
+
+# ESLint
 .eslintcache
 
-# Optional stylelint cache
+# Stylelint
 .stylelintcache
+
+# Parcel cache
+.cache
+.parcel-cache
+
+# Next.js cache
+.next/cache/
+
+# TypeScript
+*.tsbuildinfo
+.tsbuildinfo
 
 # Microbundle cache
 .rpt2_cache/
@@ -68,40 +156,213 @@ pids
 .rts2_cache_es/
 .rts2_cache_umd/
 
-# Optional REPL history
-.node_repl_history
+# Rollup cache
+.rollup.cache/
 
-# Output of 'npm pack'
-*.tgz
+# ================================================================================
+# PACKAGE MANAGER FILES
+# ================================================================================
+# npm
+package-lock.json
+
+# Yarn
+yarn.lock
+.yarn-integrity
+
+# pnpm
+pnpm-lock.yaml
 
 # Yarn Integrity file
 .yarn-integrity
 
-# parcel-bundler cache (https://parceljs.org/)
-.cache
-.parcel-cache
+# Output of 'npm pack'
+*.tgz
 
-# Stores VSCode versions used for testing VSCode extensions
-.vscode-test
+# Optional REPL history
+.node_repl_history
 
-# yarn v2
-.yarn/cache
-.yarn/unplugged
-.yarn/build-state.yml
-.yarn/install-state.gz
-.pnp.*
+# ================================================================================
+# DEPLOYMENT AND HOSTING
+# ================================================================================
+# Vercel
+.vercel
+.vercel.json
 
+# Netlify
+.netlify/
+
+# Firebase
+.firebase/
+.firebaserc
+firebase-debug.log
+firebase-debug.*.log
+
+# Serverless Framework
+.serverless/
+
+# AWS
+.aws/
+
+# ================================================================================
+# МУЗЫКАЛЬНОЕ ПРИЛОЖЕНИЕ - СПЕЦИФИЧНЫЕ ФАЙЛЫ
+# ================================================================================
 # ✅ КРИТИЧНО: Музыкальные файлы (хранятся в Vercel Blob Storage)
 public/music/
+public/audio/
+music/
+audio/
 
-# ✅ Временные файлы плейлиста
+# ✅ Локальные медиа файлы
+*.mp3
+*.wav
+*.flac
+*.m4a
+*.ogg
+*.aac
+*.wma
+
+# ✅ Изображения обложек альбомов (если хранятся локально)
+public/covers/
+public/albums/
+covers/
+album-art/
+
+# ✅ Временные файлы плейлистов и кэша
 playlist-data.js
 music-cache.json
+tracks-cache.json
+album-cache.json
+duration-cache.json
 
-# ✅ Локальные скрипты для загрузки музыки
+# ✅ Локальные скрипты для управления музыкой
 scripts/upload-music.js
 scripts/migrate-to-blob.js
+scripts/process-music.js
+scripts/generate-metadata.js
+scripts/sync-blob-storage.js
 
 # ✅ Backup файлы
 *.backup
 *.bak
+*.orig
+backup/
+backups/
+
+# ✅ Временные файлы загрузки
+uploads/
+temp/
+tmp/
+
+# ✅ Файлы конфигурации для музыкальной обработки
+ffmpeg.config.js
+audio-processing.config.js
+
+# ================================================================================
+# ANALYTICS AND MONITORING
+# ================================================================================
+# Redis dumps (если используется локально)
+dump.rdb
+*.rdb
+
+# Analytics cache
+analytics-cache/
+stats-cache/
+
+# Monitoring и метрики
+metrics/
+stats/
+*.stats
+
+# ================================================================================
+# SECURITY AND CERTIFICATES
+# ================================================================================
+*.pem
+*.key
+*.cert
+*.crt
+*.p12
+*.p8
+*.cer
+*.der
+
+# JWT secrets
+jwt-secret.txt
+secrets/
+
+# ================================================================================
+# DEVELOPMENT TOOLS
+# ================================================================================
+# Stores VSCode versions used for testing VSCode extensions
+.vscode-test
+
+# Storybook
+storybook-static/
+
+# Cypress
+cypress/videos/
+cypress/screenshots/
+
+# Playwright
+playwright-report/
+test-results/
+
+# ================================================================================
+# MISCELLANEOUS
+# ================================================================================
+# Temporary files
+*.tmp
+*.temp
+
+# Lock files for various tools
+*.lock
+
+# Generated files
+generated/
+auto-generated/
+
+# Documentation builds
+docs/build/
+
+# API documentation
+api-docs/
+
+# Size analysis
+bundle-analyzer-report.html
+webpack-bundle-analyzer.html
+
+# ================================================================================
+# MOBILE AND PWA
+# ================================================================================
+# Capacitor
+android/
+ios/
+capacitor.config.json
+
+# Cordova
+platforms/
+plugins/
+www/
+
+# React Native
+*.jks
+*.p8
+*.p12
+*.mobileprovision
+*.orig.*
+web-build/
+
+# ================================================================================
+# CUSTOM PROJECT EXCLUSIONS
+# ================================================================================
+# Локальные конфигурационные файлы для разработки
+local.config.js
+dev.config.js
+
+# Файлы с чувствительными данными
+tokens.json
+api-keys.json
+
+# Экспериментальные файлы
+experimental/
+prototype/
+sandbox/

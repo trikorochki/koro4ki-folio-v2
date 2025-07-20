@@ -32,8 +32,9 @@ interface MusicPlayerStore extends PlayerState {
 // CONSTANTS
 // ================================================================================
 
-const DURATION_TIMEOUT = 8000;
+const DURATION_TIMEOUT = 10000; // Увеличено для Blob Storage
 const ANALYTICS_TIMEOUT = 5000;
+const MAX_RETRY_ATTEMPTS = 3;
 
 // ================================================================================
 // UTILITY FUNCTIONS
@@ -46,98 +47,221 @@ const formatTime = (seconds: number): string => {
   return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
 };
 
+/**
+ * Получает прямой URL трека из Blob Storage
+ * Теперь возвращает прямые URL без проксирования через API
+ */
 const getTrackUrl = (track: Track): string => {
   console.log(`🎵 Getting track URL: ${track.file}`);
+  
+  // Проверяем, является ли это прямым URL из Blob Storage
+  if (track.file.startsWith('https://') || track.file.startsWith('blob:')) {
+    return track.file;
+  }
+  
+  // Fallback для старых форматов путей
+  if (track.file.startsWith('/api/music/')) {
+    console.warn('⚠️ Using legacy API path, consider updating to direct Blob Storage URL');
+    return track.file;
+  }
+  
+  console.error('❌ Invalid track URL format:', track.file);
   return track.file;
 };
 
+/**
+ * Оптимизированный Fisher-Yates shuffle алгоритм
+ */
+const shuffleArray = <T>(array: T[]): T[] => {
+  const shuffled = [...array];
+  
+  // Оптимизированный Fisher-Yates алгоритм
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    // Используем crypto.getRandomValues для лучшей случайности
+    const randomBytes = new Uint32Array(1);
+    crypto.getRandomValues(randomBytes);
+    const j = Math.floor((randomBytes[0] / (0xFFFFFFFF + 1)) * (i + 1));
+    
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  
+  return shuffled;
+};
+
 // ================================================================================
-// ASYNC FUNCTIONS
+// ENHANCED ASYNC FUNCTIONS
 // ================================================================================
 
+/**
+ * Улучшенная функция получения длительности с поддержкой Blob Storage URL
+ */
 const updateTrackDurationAsync = async (
   trackId: string, 
   track: Track, 
   updateFn: (id: string, duration: string) => void
 ): Promise<void> => {
+  // Проверяем кэш
   const cached = DurationCache.get(trackId);
   if (cached && cached !== '0:00') {
     updateFn(trackId, cached);
     return;
   }
 
+  let retryCount = 0;
+  const maxRetries = MAX_RETRY_ATTEMPTS;
+
+  const attemptDurationLoad = async (): Promise<void> => {
+    try {
+      const audioUrl = getTrackUrl(track);
+      console.log(`⏱️ Loading duration (attempt ${retryCount + 1}/${maxRetries}): ${track.title}`);
+      console.log(`🔗 URL: ${audioUrl}`);
+      
+      // Валидация URL
+      if (!audioUrl || (!audioUrl.startsWith('http') && !audioUrl.startsWith('blob:'))) {
+        throw new Error(`Invalid audio URL: ${audioUrl}`);
+      }
+      
+      const audio = new Audio();
+      audio.preload = 'metadata';
+      audio.crossOrigin = 'anonymous'; // Для CORS с Blob Storage
+      
+      const loadPromise = new Promise<void>((resolve, reject) => {
+        const cleanup = () => {
+          audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
+          audio.removeEventListener('error', handleError);
+          audio.removeEventListener('canplaythrough', handleCanPlayThrough);
+          try {
+            audio.src = '';
+          } catch (e) {
+            console.warn('Error clearing audio src:', e);
+          }
+        };
+
+        const handleLoadedMetadata = () => {
+          if (!isNaN(audio.duration) && audio.duration > 0) {
+            const formattedDuration = formatTime(audio.duration);
+            DurationCache.set(trackId, formattedDuration);
+            updateFn(trackId, formattedDuration);
+            console.log(`⏱️ Got duration for ${trackId}: ${formattedDuration}`);
+            cleanup();
+            resolve();
+          } else {
+            console.warn(`⚠️ Invalid duration for ${trackId}: ${audio.duration}`);
+            cleanup();
+            reject(new Error('Invalid duration'));
+          }
+        };
+
+        const handleCanPlayThrough = () => {
+          // Fallback если loadedmetadata не срабатывает
+          if (!isNaN(audio.duration) && audio.duration > 0) {
+            handleLoadedMetadata();
+          }
+        };
+
+        const handleError = (event: Event) => {
+          const target = event.target as HTMLAudioElement;
+          const error = target.error;
+          
+          let errorMessage = 'Unknown audio error';
+          if (error) {
+            switch (error.code) {
+              case 1: errorMessage = 'Audio loading aborted'; break;
+              case 2: errorMessage = 'Network error'; break;
+              case 3: errorMessage = 'Audio decode error'; break;
+              case 4: errorMessage = 'Audio format not supported'; break;
+            }
+          }
+          
+          console.warn(`❌ Audio error for ${trackId}:`, errorMessage);
+          cleanup();
+          reject(new Error(errorMessage));
+        };
+
+        audio.addEventListener('loadedmetadata', handleLoadedMetadata);
+        audio.addEventListener('error', handleError);
+        audio.addEventListener('canplaythrough', handleCanPlayThrough);
+      });
+
+      const timeoutPromise = new Promise<void>((_, reject) => {
+        setTimeout(() => {
+          reject(new Error(`Timeout loading duration for track ${trackId} (${DURATION_TIMEOUT}ms)`));
+        }, DURATION_TIMEOUT);
+      });
+
+      // Устанавливаем источник и ждем загрузки
+      audio.src = audioUrl;
+      await Promise.race([loadPromise, timeoutPromise]);
+
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.warn(`⚠️ Failed to get duration for ${trackId} (attempt ${retryCount + 1}):`, errorMessage);
+      
+      retryCount++;
+      if (retryCount < maxRetries) {
+        // Экспоненциальная задержка между попытками
+        const delay = Math.min(1000 * Math.pow(2, retryCount), 5000);
+        console.log(`🔄 Retrying in ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        return attemptDurationLoad();
+      } else {
+        console.error(`💥 Failed to get duration for ${trackId} after ${maxRetries} attempts`);
+        // Устанавливаем placeholder duration в кэш чтобы не пытаться снова
+        DurationCache.set(trackId, '0:00');
+        throw error;
+      }
+    }
+  };
+
   try {
-    const audioUrl = getTrackUrl(track);
-    console.log(`⏱️ Loading duration for: ${track.title} from ${audioUrl}`);
-    
-    const audio = new Audio();
-    audio.preload = 'metadata';
-    
-    const loadPromise = new Promise<void>((resolve, reject) => {
-      const handleLoadedMetadata = () => {
-        if (!isNaN(audio.duration) && audio.duration > 0) {
-          const formattedDuration = formatTime(audio.duration);
-          DurationCache.set(trackId, formattedDuration);
-          updateFn(trackId, formattedDuration);
-          console.log(`⏱️ Got duration for ${trackId}: ${formattedDuration}`);
-        }
-        cleanup();
-        resolve();
-      };
-
-      const handleError = (error: any) => {
-        console.warn(`Failed to get duration for track ${trackId}:`, error);
-        cleanup();
-        reject(error);
-      };
-
-      const cleanup = () => {
-        audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
-        audio.removeEventListener('error', handleError);
-        audio.src = '';
-      };
-
-      audio.addEventListener('loadedmetadata', handleLoadedMetadata);
-      audio.addEventListener('error', handleError);
-    });
-
-    const timeoutPromise = new Promise<void>((_, reject) => {
-      setTimeout(() => {
-        reject(new Error(`Timeout getting duration for track ${trackId}`));
-      }, DURATION_TIMEOUT);
-    });
-
-    audio.src = audioUrl;
-    await Promise.race([loadPromise, timeoutPromise]);
-
+    await attemptDurationLoad();
   } catch (error) {
-    console.warn(`Error getting duration for track ${trackId}:`, error);
+    console.warn(`Final error getting duration for track ${trackId}:`, error);
   }
 };
 
-const sendAnalytics = async (trackId: string, eventType: string = '30s_listen'): Promise<void> => {
+/**
+ * Улучшенная функция аналитики с обработкой ошибок
+ */
+const sendAnalytics = async (trackId: string, eventType: string = 'play'): Promise<void> => {
   if (typeof window === 'undefined') return;
 
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), ANALYTICS_TIMEOUT);
 
-    await fetch('/api/listen', {
+    const response = await fetch('/api/listen', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
       body: JSON.stringify({
         trackId,
         event: eventType,
+        timestamp: new Date().toISOString(),
+        userAgent: navigator.userAgent
       }),
       signal: controller.signal
     });
 
     clearTimeout(timeoutId);
-  } catch (error) {
-    if (error instanceof Error && error.name === 'AbortError') {
-      console.warn('Analytics request timeout');
+
+    if (!response.ok) {
+      console.warn(`Analytics request failed with status ${response.status}`);
     } else {
-      console.warn('Analytics request failed:', error);
+      console.log(`📊 Analytics sent: ${eventType} for ${trackId}`);
+    }
+
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      if (error.name === 'AbortError') {
+        console.warn('📊 Analytics request timeout');
+      } else {
+        console.warn('📊 Analytics request failed:', error.message);
+      }
+    } else {
+      console.warn('📊 Analytics request failed with unknown error');
     }
   }
 };
@@ -161,7 +285,8 @@ export const useMusicPlayer = create<MusicPlayerStore>((set, get) => ({
     const { queue } = get();
     const trackIndex = queue.findIndex(t => t.id === track.id);
     
-    console.log(`🎵 Playing track: ${track.title} from ${getTrackUrl(track)}`);
+    const trackUrl = getTrackUrl(track);
+    console.log(`🎵 Playing track: ${track.title} from ${trackUrl}`);
     
     set({
       currentTrack: track,
@@ -170,12 +295,18 @@ export const useMusicPlayer = create<MusicPlayerStore>((set, get) => ({
       currentTime: 0,
     });
     
+    // Асинхронно получаем длительность
     updateTrackDurationAsync(track.id, track, (trackId, duration) => {
       const { updateTrackDuration } = get();
       updateTrackDuration(trackId, duration);
+    }).catch(error => {
+      console.warn(`Failed to update duration for ${track.id}:`, error);
     });
     
-    sendAnalytics(track.id);
+    // Отправляем аналитику
+    sendAnalytics(track.id, 'play').catch(error => {
+      console.warn(`Failed to send analytics for ${track.id}:`, error);
+    });
   },
 
   pauseTrack: () => {
@@ -186,6 +317,11 @@ export const useMusicPlayer = create<MusicPlayerStore>((set, get) => ({
     const { currentTrack } = get();
     if (currentTrack) {
       set({ isPlaying: true });
+      
+      // Отправляем аналитику о возобновлении
+      sendAnalytics(currentTrack.id, 'resume').catch(error => {
+        console.warn(`Failed to send resume analytics:`, error);
+      });
     }
   },
 
@@ -219,12 +355,18 @@ export const useMusicPlayer = create<MusicPlayerStore>((set, get) => ({
         currentTime: 0,
       });
       
+      // Асинхронно обновляем длительность
       updateTrackDurationAsync(nextTrack.id, nextTrack, (trackId, duration) => {
         const { updateTrackDuration } = get();
         updateTrackDuration(trackId, duration);
+      }).catch(error => {
+        console.warn(`Failed to update duration for next track ${nextTrack.id}:`, error);
       });
       
-      sendAnalytics(nextTrack.id);
+      // Отправляем аналитику
+      sendAnalytics(nextTrack.id, 'skip_next').catch(error => {
+        console.warn(`Failed to send next track analytics:`, error);
+      });
     }
   },
 
@@ -250,36 +392,56 @@ export const useMusicPlayer = create<MusicPlayerStore>((set, get) => ({
         currentTime: 0,
       });
       
+      // Асинхронно обновляем длительность
       updateTrackDurationAsync(prevTrack.id, prevTrack, (trackId, duration) => {
         const { updateTrackDuration } = get();
         updateTrackDuration(trackId, duration);
+      }).catch(error => {
+        console.warn(`Failed to update duration for prev track ${prevTrack.id}:`, error);
       });
       
-      sendAnalytics(prevTrack.id);
+      // Отправляем аналитику
+      sendAnalytics(prevTrack.id, 'skip_prev').catch(error => {
+        console.warn(`Failed to send prev track analytics:`, error);
+      });
     }
   },
 
   setCurrentTime: (time: number) => {
+    if (isNaN(time)) {
+      console.warn('⚠️ Invalid time value:', time);
+      return;
+    }
     const validTime = Math.max(0, time);
     set({ currentTime: validTime });
   },
   
   setDuration: (duration: number) => {
+    if (isNaN(duration)) {
+      console.warn('⚠️ Invalid duration value:', duration);
+      return;
+    }
     const validDuration = Math.max(0, duration);
     set({ duration: validDuration });
   },
   
   setVolume: (volume: number) => {
+    if (isNaN(volume)) {
+      console.warn('⚠️ Invalid volume value:', volume);
+      return;
+    }
     const clampedVolume = Math.max(0, Math.min(1, volume));
     set({ volume: clampedVolume });
   },
   
   setShuffle: (shuffle: boolean) => {
     set({ shuffle });
+    console.log(`🔀 Shuffle ${shuffle ? 'enabled' : 'disabled'}`);
   },
   
   setRepeat: (repeat: 'off' | 'one' | 'all') => {
     set({ repeat });
+    console.log(`🔁 Repeat mode: ${repeat}`);
   },
   
   setQueue: (tracks: Track[]) => {
@@ -291,9 +453,11 @@ export const useMusicPlayer = create<MusicPlayerStore>((set, get) => ({
         isPlaying: false,
         currentTime: 0
       });
+      console.log('🗑️ Queue cleared');
       return;
     }
     
+    console.log(`📋 Queue set with ${tracks.length} tracks`);
     set({ 
       queue: [...tracks],
       currentIndex: 0,
@@ -302,16 +466,16 @@ export const useMusicPlayer = create<MusicPlayerStore>((set, get) => ({
   },
   
   shuffleAndPlay: (tracks: Track[]) => {
-    if (tracks.length === 0) return;
-    
-    const shuffled = [...tracks];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    if (tracks.length === 0) {
+      console.warn('⚠️ Cannot shuffle empty track list');
+      return;
     }
     
+    const shuffled = shuffleArray(tracks);
     const firstTrack = shuffled[0];
+    
     console.log(`🔀 Shuffle play starting with: ${firstTrack.title}`);
+    console.log(`📋 Shuffled ${shuffled.length} tracks`);
     
     set({
       queue: shuffled,
@@ -322,15 +486,22 @@ export const useMusicPlayer = create<MusicPlayerStore>((set, get) => ({
       shuffle: true,
     });
     
+    // Асинхронно обновляем длительность первого трека
     updateTrackDurationAsync(firstTrack.id, firstTrack, (trackId, duration) => {
       const { updateTrackDuration } = get();
       updateTrackDuration(trackId, duration);
+    }).catch(error => {
+      console.warn(`Failed to update duration for shuffle first track ${firstTrack.id}:`, error);
     });
     
-    sendAnalytics(firstTrack.id);
+    // Отправляем аналитику
+    sendAnalytics(firstTrack.id, 'shuffle_play').catch(error => {
+      console.warn(`Failed to send shuffle play analytics:`, error);
+    });
   },
 
   clearQueue: () => {
+    console.log('🗑️ Clearing queue and stopping playback');
     set({
       queue: [],
       currentTrack: null,
@@ -353,16 +524,26 @@ export const useMusicPlayer = create<MusicPlayerStore>((set, get) => ({
   updateTrackDuration: (trackId: string, duration: string) => {
     const { currentTrack, queue } = get();
     
+    // Валидация длительности
+    if (!duration || duration === 'NaN:aN') {
+      console.warn(`⚠️ Invalid duration for track ${trackId}: ${duration}`);
+      return;
+    }
+    
+    // Обновляем текущий трек если это он
     if (currentTrack?.id === trackId) {
       set({
         currentTrack: { ...currentTrack, duration }
       });
     }
     
+    // Обновляем трек в очереди
     const updatedQueue = queue.map(track => 
       track.id === trackId ? { ...track, duration } : track
     );
     
     set({ queue: updatedQueue });
+    
+    console.log(`⏱️ Updated duration for ${trackId}: ${duration}`);
   },
 }));

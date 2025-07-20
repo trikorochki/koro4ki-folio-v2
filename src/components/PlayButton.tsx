@@ -50,6 +50,10 @@ const HEADER_CLASSES = [
   "disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
 ].join(' ');
 
+// ================================================================================
+// MEMOIZED ICON COMPONENTS
+// ================================================================================
+
 const PauseIcon = memo<{ iconSize: IconSize }>(({ iconSize }) => {
   const iconConfig = ICON_SIZES[iconSize];
   
@@ -85,6 +89,70 @@ const PlayIcon = memo<{ iconSize: IconSize; className?: string }>(({ iconSize, c
 
 PlayIcon.displayName = 'PlayIcon';
 
+// ================================================================================
+// ENHANCED TRACK VALIDATION FUNCTIONS
+// ================================================================================
+
+/**
+ * Улучшенная валидация треков с проверкой всех обязательных полей
+ */
+const validateTrack = (track: Track): boolean => {
+  if (!track) {
+    console.warn('PlayButton: Track is null or undefined');
+    return false;
+  }
+
+  if (!track.id || typeof track.id !== 'string') {
+    console.warn('PlayButton: Track missing valid ID:', track);
+    return false;
+  }
+
+  if (!track.file || typeof track.file !== 'string') {
+    console.warn('PlayButton: Track missing valid file URL:', track.id);
+    return false;
+  }
+
+  if (!track.title || typeof track.title !== 'string') {
+    console.warn('PlayButton: Track missing valid title:', track.id);
+    return false;
+  }
+
+  // Валидация URL для Blob Storage
+  const isValidUrl = track.file.startsWith('https://') || 
+                     track.file.startsWith('http://') || 
+                     track.file.startsWith('blob:') ||
+                     track.file.startsWith('/api/music/');
+
+  if (!isValidUrl) {
+    console.warn('PlayButton: Track has invalid file URL format:', track.file);
+    return false;
+  }
+
+  return true;
+};
+
+/**
+ * Валидация списка треков перед воспроизведением
+ */
+const validateTrackList = (tracks: Track[]): Track[] => {
+  if (!Array.isArray(tracks)) {
+    console.warn('PlayButton: Tracks is not an array:', tracks);
+    return [];
+  }
+
+  const validTracks = tracks.filter(validateTrack);
+  
+  if (validTracks.length !== tracks.length) {
+    console.warn(`PlayButton: Filtered ${tracks.length - validTracks.length} invalid tracks from list`);
+  }
+
+  return validTracks;
+};
+
+// ================================================================================
+// MAIN COMPONENT WITH ENHANCED OPTIMIZATION
+// ================================================================================
+
 const PlayButton = memo<PlayButtonProps>(({
   tracks,
   size = 'medium',
@@ -100,12 +168,26 @@ const PlayButton = memo<PlayButtonProps>(({
     isPlaying,
     currentTrack,
     pauseTrack,
-    resumeTrack
+    resumeTrack,
+    setQueue,
+    playTrack
   } = useMusicPlayer();
 
+  // ================================================================================
+  // MEMOIZED COMPUTATIONS
+  // ================================================================================
+
+  const validTracks = useMemo(() => {
+    return validateTrackList(tracks);
+  }, [tracks]);
+
+  const hasValidTracks = useMemo(() => {
+    return validTracks.length > 0;
+  }, [validTracks]);
+
   const isCurrentTrackInList = useMemo(() => {
-    return currentTrack && tracks.some(track => track.id === currentTrack.id);
-  }, [currentTrack, tracks]);
+    return currentTrack && validTracks.some(track => track.id === currentTrack.id);
+  }, [currentTrack, validTracks]);
 
   const showPause = useMemo(() => {
     return isCurrentTrackInList && isPlaying;
@@ -114,55 +196,6 @@ const PlayButton = memo<PlayButtonProps>(({
   const shouldRemoveShadow = useMemo(() => {
     return variant === 'default' && className?.includes('shadow-none');
   }, [variant, className]);
-
-  const validTracks = useMemo(() => {
-    return tracks.filter(track => 
-      track && track.id && track.file && track.title
-    );
-  }, [tracks]);
-
-  const hasValidTracks = validTracks.length > 0;
-
-  const handlePlay = useCallback((e?: React.MouseEvent) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-
-    if (!hasValidTracks || disabled) {
-      console.warn('PlayButton: No valid tracks or button is disabled');
-      return;
-    }
-
-    try {
-      if (isCurrentTrackInList && isPlaying) {
-        pauseTrack();
-      } else if (isCurrentTrackInList && !isPlaying) {
-        resumeTrack();
-      } else {
-        shuffleAndPlay(validTracks);
-      }
-    } catch (error) {
-      console.error('PlayButton: Error handling play action:', error);
-    }
-  }, [
-    hasValidTracks,
-    disabled,
-    isCurrentTrackInList,
-    isPlaying,
-    pauseTrack,
-    resumeTrack,
-    shuffleAndPlay,
-    validTracks
-  ]);
-
-  const handleMouseEnter = useCallback(() => {
-    setIsHovered(true);
-  }, []);
-
-  const handleMouseLeave = useCallback(() => {
-    setIsHovered(false);
-  }, []);
 
   const buttonClasses = useMemo(() => {
     const sizeClass = SIZE_CLASSES[size];
@@ -173,32 +206,128 @@ const PlayButton = memo<PlayButtonProps>(({
   }, [size, shouldRemoveShadow, className]);
 
   const ariaLabel = useMemo(() => {
+    const trackCount = validTracks.length;
+    
     if (variant === 'header') {
-      return showPause ? 'Pause music' : 'Play random music';
+      return showPause 
+        ? 'Pause current music' 
+        : `Play random music (${trackCount} track${trackCount !== 1 ? 's' : ''} available)`;
     }
-    return showPause ? 'Pause music' : 'Play music';
-  }, [variant, showPause]);
+    
+    return showPause 
+      ? 'Pause current track' 
+      : `Play music (${trackCount} track${trackCount !== 1 ? 's' : ''})`;
+  }, [variant, showPause, validTracks.length]);
+
+  // ================================================================================
+  // OPTIMIZED EVENT HANDLERS
+  // ================================================================================
+
+  const handlePlay = useCallback((e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    if (!hasValidTracks || disabled) {
+      console.warn('PlayButton: Cannot play - no valid tracks or button disabled', {
+        hasValidTracks,
+        disabled,
+        trackCount: validTracks.length
+      });
+      return;
+    }
+
+    try {
+      if (isCurrentTrackInList && isPlaying) {
+        console.log('PlayButton: Pausing current track');
+        pauseTrack();
+      } else if (isCurrentTrackInList && !isPlaying && currentTrack) {
+        console.log('PlayButton: Resuming current track');
+        resumeTrack();
+      } else {
+        // Определяем тип воспроизведения в зависимости от варианта
+        if (variant === 'header' || variant === 'default') {
+          console.log(`PlayButton: Starting shuffle play with ${validTracks.length} tracks`);
+          shuffleAndPlay(validTracks);
+        } else {
+          // Для artist/album - играем первый трек и устанавливаем очередь
+          console.log(`PlayButton: Playing first track and setting queue (${validTracks.length} tracks)`);
+          setQueue(validTracks);
+          playTrack(validTracks[0]);
+        }
+      }
+    } catch (error) {
+      console.error('PlayButton: Error handling play action:', error);
+    }
+  }, [
+    hasValidTracks,
+    disabled,
+    isCurrentTrackInList,
+    isPlaying,
+    currentTrack,
+    pauseTrack,
+    resumeTrack,
+    shuffleAndPlay,
+    setQueue,
+    playTrack,
+    validTracks,
+    variant
+  ]);
+
+  const handleMouseEnter = useCallback(() => {
+    setIsHovered(true);
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    setIsHovered(false);
+  }, []);
+
+  // ================================================================================
+  // ACCESSIBILITY ENHANCEMENTS
+  // ================================================================================
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handlePlay();
+    }
+  }, [handlePlay]);
+
+  // ================================================================================
+  // EARLY RETURNS AND WARNINGS
+  // ================================================================================
 
   if (!hasValidTracks && !disabled) {
-    console.warn('PlayButton: No valid tracks provided');
+    console.warn('PlayButton: No valid tracks provided', { 
+      totalTracks: tracks.length,
+      validTracks: validTracks.length 
+    });
   }
+
+  // ================================================================================
+  // VARIANT RENDERS
+  // ================================================================================
 
   if (variant === 'header') {
     return (
       <button
         className={cn(HEADER_CLASSES, className)}
         onClick={handlePlay}
+        onKeyDown={handleKeyDown}
         disabled={disabled || !hasValidTracks}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         aria-label={ariaLabel}
+        aria-pressed={showPause ? "true" : "false"}  // ✅ Исправлено
         type="button"
+        tabIndex={0}
       >
         <div className="w-5 h-5 flex items-center justify-center">
           {showPause ? (
             <PauseIcon iconSize="small" />
           ) : (
-            <div className="w-0 h-0 border-l-[8px] border-l-black border-t-[5px] border-t-transparent border-b-[5px] border-b-transparent ml-0.5" />
+            <PlayIcon iconSize="small" />
           )}
         </div>
         <span className="font-medium">
@@ -213,11 +342,15 @@ const PlayButton = memo<PlayButtonProps>(({
       <button
         className={buttonClasses}
         onClick={handlePlay}
+        onKeyDown={handleKeyDown}
         disabled={disabled || !hasValidTracks}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         aria-label={ariaLabel}
+        aria-pressed={showPause ? "true" : "false"}  // ✅ Исправлено
         type="button"
+        tabIndex={0}
+        title={ariaLabel}
       >
         {showPause ? (
           <PauseIcon iconSize={size} />
@@ -228,15 +361,20 @@ const PlayButton = memo<PlayButtonProps>(({
     );
   }
 
+  // Default variant
   return (
     <button
       className={buttonClasses}
       onClick={handlePlay}
+      onKeyDown={handleKeyDown}
       disabled={disabled || !hasValidTracks}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       aria-label={ariaLabel}
+      aria-pressed={showPause ? "true" : "false"}  // ✅ Исправлено
       type="button"
+      tabIndex={0}
+      title={ariaLabel}
     >
       {showPause ? (
         <PauseIcon iconSize={size} />

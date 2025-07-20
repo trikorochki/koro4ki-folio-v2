@@ -2,15 +2,99 @@
   "framework": "nextjs",
   "buildCommand": "npm run build",
   "installCommand": "npm install",
+  "outputDirectory": ".next",
+  "buildOutputApiVersion": 2,
+  
+  "headers": [
+    {
+      "source": "/api/music/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, HEAD, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "Range, Content-Type, Authorization"
+        },
+        {
+          "key": "Access-Control-Expose-Headers",
+          "value": "Content-Length, Content-Range, Accept-Ranges"
+        },
+        {
+          "key": "Accept-Ranges",
+          "value": "bytes"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/api/blob/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, s-maxage=120, stale-while-revalidate=600"
+        }
+      ]
+    },
+    {
+      "source": "/api/stats",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "private, no-cache"
+        }
+      ]
+    }
+  ],
+
   "rewrites": [
     {
       "source": "/music/(.*)",
       "destination": "/api/music/$1"
     }
   ],
+
   "functions": {
     "src/app/api/music/[...path]/route.ts": {
-      "maxDuration": 30
+      "maxDuration": 30,
+      "memory": 1024,
+      "regions": ["cle1", "iad1"]
+    },
+    "src/app/api/blob/list/route.ts": {
+      "maxDuration": 25,
+      "memory": 512,
+      "regions": ["cle1", "iad1"]
+    },
+    "src/app/api/stats/route.ts": {
+      "maxDuration": 20,
+      "memory": 256,
+      "regions": ["cle1", "iad1"]
     }
-  }
+  },
+
+  "cleanUrls": true,
+  "trailingSlash": false,
+  
+  "redirects": [
+    {
+      "source": "/playlist",
+      "destination": "/api/blob/list",
+      "permanent": false
+    }
+  ],
+
+  "crons": [
+    {
+      "path": "/api/cleanup",
+      "schedule": "0 2 * * *"
+    }
+  ]
 }
