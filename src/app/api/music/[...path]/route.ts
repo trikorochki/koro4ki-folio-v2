@@ -78,25 +78,33 @@ const SECURITY_CONFIG = {
 // UTILITY FUNCTIONS
 // ================================================================================
 
+// Более гибкая валидация путей с поддержкой кириллицы
 function sanitizePath(rawPath: string[]): string | null {
   try {
     const filePath = rawPath.join('/');
     const decodedPath = decodeURIComponent(filePath);
     
-    // Проверка длины пути
-    if (decodedPath.length > SECURITY_CONFIG.maxPathLength) {
+    // Увеличиваем лимит длины для длинных названий
+    if (decodedPath.length > 800) {
       console.warn('Path too long:', decodedPath.length);
       return null;
     }
     
-    // Проверка на разрешенные символы
-    if (!SECURITY_CONFIG.allowedPathPattern.test(decodedPath)) {
+    // Разрешаем кириллицу и больше символов
+    const allowedPattern = /^[a-zA-Z0-9а-яА-ЯёЁ\s\.\-_\/\(\)\[\]№&]+$/u;
+    if (!allowedPattern.test(decodedPath)) {
       console.warn('Invalid characters in path:', decodedPath);
       return null;
     }
     
-    // Проверка на заблокированные паттерны
-    for (const pattern of SECURITY_CONFIG.blockedPatterns) {
+    // Проверяем только критичные паттерны
+    const blockedPatterns = [
+      /\.\./,     // Directory traversal  
+      /\/\//,     // Double slashes
+      /\0/        // Null bytes
+    ];
+    
+    for (const pattern of blockedPatterns) {
       if (pattern.test(decodedPath)) {
         console.warn('Blocked pattern detected:', pattern, decodedPath);
         return null;
@@ -109,6 +117,7 @@ function sanitizePath(rawPath: string[]): string | null {
     return null;
   }
 }
+
 
 function getFileMetadata(filePath: string): FileMetadata {
   const extension = filePath.toLowerCase().split('.').pop() || '';
