@@ -52,7 +52,7 @@ const nextConfig = {
     dangerouslyAllowSVG: true,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
     // Настройки качества изображений
-    quality: 80,
+
   },
   
   // ================================================================================
@@ -142,8 +142,6 @@ const nextConfig = {
       'next/image',
       'react-use'
     ],
-    // Улучшения для App Router
-    appDir: true,
     // Оптимизация сборки
     optimizeCss: true,
     // Улучшение производительности
