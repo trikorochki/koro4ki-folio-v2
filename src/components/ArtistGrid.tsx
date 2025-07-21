@@ -214,13 +214,6 @@ export default function ArtistGrid({ artists }: ArtistGridProps) {
                   </div>
                 )}
               </div>
-
-              {/* Playing Indicator */}
-              {isPlaying && (
-                <div className="absolute -top-2 -right-2 bg-accent-color text-black px-2 py-1 rounded-full text-xs font-bold shadow-lg animate-pulse">
-                  PLAYING
-                </div>
-              )}
             </div>
             
             {/* Artist Info */}
@@ -238,13 +231,6 @@ export default function ArtistGrid({ artists }: ArtistGridProps) {
               ) : (
                 <p className="text-secondary-text-color text-sm line-clamp-3 leading-relaxed text-center font-body opacity-70">
                   Musical artist
-                </p>
-              )}
-
-              {/* Track Count Info */}
-              {allTracks.length > 0 && (
-                <p className="text-secondary-text-color/70 text-xs mt-2 font-body">
-                  {allTracks.length} track{allTracks.length !== 1 ? 's' : ''} available
                 </p>
               )}
             </div>

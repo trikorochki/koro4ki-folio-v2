@@ -4,6 +4,8 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useMusicPlayer } from '@/lib/music-player';
 import { DurationCache } from '@/lib/duration-cache';
+import clsx from 'clsx';
+
 
 // ================================================================================
 // CONSTANTS
@@ -64,6 +66,12 @@ export default function MusicPlayer() {
   // ================================================================================
   // UTILITY FUNCTIONS WITH useCallback
   // ================================================================================
+
+  const detectCyrillic = useCallback((text?: string): boolean => {
+    if (!text) return false;
+    return /[\u0400-\u04FF]/.test(text);
+  }, []);
+
 
   const formatTime = useCallback((seconds: number): string => {
     if (!seconds || isNaN(seconds)) return '0:00';
@@ -483,31 +491,32 @@ export default function MusicPlayer() {
       <div className="container mx-auto px-4 h-full flex items-center gap-4">
         
         {/* Track Info */}
-        <div className="flex-1 min-w-0 max-w-xs">
-          <h4 
-            className="font-bold text-sm truncate mb-1" 
-            style={{ color: COLORS.white }}
-            title={currentTrack.title}
-          >
+        <div className="track-info">
+          <div className={clsx(
+            'track-title font-bold text-base truncate transition-colors',
+            detectCyrillic(currentTrack.title) ? 'font-cyrillic' : 'font-body'
+          )}>
             {currentTrack.title}
-            {isLoading && <span className="ml-2 text-xs opacity-70">🔄</span>}
-            {hasError && <span className="ml-2 text-xs text-red-400">⚠️</span>}
-          </h4>
-          <p 
-            className="text-xs truncate mb-1" 
-            style={{ color: COLORS.gray }}
-            title={artistName}
-          >
+            {isLoading && <span className="loading-indicator">🔄</span>}
+            {hasError && <span className="error-indicator">⚠️</span>}
+          </div>
+          
+          <div className={clsx(
+            'track-meta text-xs truncate transition-colors text-secondary-text-color',
+            detectCyrillic(artistName) ? 'font-cyrillic' : 'font-body'
+          )}>
             {artistName}
-          </p>
-          <p 
-            className="text-xs truncate opacity-70" 
-            style={{ color: COLORS.gray }}
-            title={albumName || 'Unknown Album'}
-          >
+          </div>
+          
+          <div className={clsx(
+            'track-album text-xs truncate transition-colors text-secondary-text-color/70',
+            detectCyrillic(albumName) ? 'font-cyrillic' : 'font-body'
+          )}>
             {albumName || 'Unknown Album'}
-          </p>
+          </div>
         </div>
+
+
 
         {/* Controls */}
         <div className="flex items-center gap-4">

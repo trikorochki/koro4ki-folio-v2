@@ -698,6 +698,12 @@ body {
   background-color: rgba(0, 0, 0, 0.4);
 }
 
+
+
+.font-cyrillic {
+  font-family: 'PT Mono', monospace;
+}
+
 /* Адаптивность */
 @media (max-width: 768px) {
   body {

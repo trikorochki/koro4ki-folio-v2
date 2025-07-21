@@ -83,7 +83,7 @@ export default function Header() {
           />
         </Link>
 
-        {/* Кнопка Play Random */}
+        {/* ✅ ИСПРАВЛЕНО: Упрощенная кнопка Random */}
         <button 
           className="header-play-random-btn flex items-center gap-3 bg-accent-color hover:bg-green-400 text-black font-bold px-6 py-3 rounded-full font-body transition-all duration-200 hover:scale-105"
           onClick={handlePlayRandom}
@@ -99,8 +99,9 @@ export default function Header() {
               <div className="play-triangle w-0 h-0 border-l-[6px] border-l-black border-t-[4px] border-t-transparent border-b-[4px] border-b-transparent ml-0.5"></div>
             )}
           </div>
+          {/* ✅ ИСПРАВЛЕНО: Убрали "Play" - оставили только "Random" */}
           <span className="play-text hidden sm:inline">
-            {isPlaying && currentTrack ? 'Pause' : 'Play Random'}
+            Random
           </span>
         </button>
 
