@@ -84,7 +84,7 @@ export default function ArtistPage() {
   const [activeTab, setActiveTab] = useState<'Albums' | 'EPs' | 'Demos'>('Albums');
   const [loading, setLoading] = useState(true);
   const [showAllTracks, setShowAllTracks] = useState(false);
-  const [showDiscography, setShowDiscography] = useState(false);
+  const [shuffleEnabled, setShuffleEnabled] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loadStartTime] = useState(() => Date.now());
 
@@ -125,8 +125,9 @@ export default function ArtistPage() {
     return (artist?.[activeTab] as Album[]) || [];
   }, [artist, activeTab]);
 
+  // ✅ ИЗМЕНЕНО: Показываем только первые 4 трека вместо 10
   const tracksToShow = useMemo(() => {
-    return showAllTracks ? artistTracks : artistTracks.slice(0, 10);
+    return showAllTracks ? artistTracks : artistTracks.slice(0, 4);
   }, [artistTracks, showAllTracks]);
 
   const isLoading = useMemo(() => loading || tracksLoading, [loading, tracksLoading]);
@@ -222,8 +223,50 @@ export default function ArtistPage() {
     setShowAllTracks(prev => !prev);
   }, []);
 
-  const handleToggleDiscography = useCallback(() => {
-    setShowDiscography(prev => !prev);
+  // ✅ НОВОЕ: Функция плавного скролла к дискографии
+  const handleScrollToDiscography = useCallback(() => {
+    const discographyElement = document.getElementById('discography-section');
+    if (discographyElement) {
+      discographyElement.scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }
+  }, []);
+
+  // ✅ НОВОЕ: Функция Share артиста
+  const handleShareArtist = useCallback(async () => {
+    const artistUrl = `${window.location.origin}/artist/${artistId}`;
+    const shareData = {
+      title: `${artist?.name} - KR4 Neuromusic`,
+      text: `Послушай музыку исполнителя ${artist?.name}`,
+      url: artistUrl
+    };
+
+    try {
+      if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+        await navigator.share(shareData);
+        console.log('✅ Artist shared successfully');
+      } else {
+        // Fallback: копирование в буфер обмена
+        await navigator.clipboard.writeText(artistUrl);
+        console.log('✅ Artist URL copied to clipboard');
+        // Можно добавить toast уведомление
+      }
+    } catch (error) {
+      console.warn('⚠️ Share failed:', error);
+      // Fallback: копирование в буфер обмена
+      try {
+        await navigator.clipboard.writeText(artistUrl);
+        console.log('✅ Artist URL copied to clipboard as fallback');
+      } catch (clipboardError) {
+        console.error('❌ Failed to copy to clipboard:', clipboardError);
+      }
+    }
+  }, [artistId, artist?.name]);
+
+  const handleToggleShuffle = useCallback(() => {
+    setShuffleEnabled(prev => !prev);
   }, []);
 
   const handleTabChange = useCallback((tab: 'Albums' | 'EPs' | 'Demos') => {
@@ -329,30 +372,25 @@ export default function ArtistPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* Header Section */}
+      {/* ✅ УДАЛЕНО: "Back to Artists" ссылка */}
+      
+      {/* Artist Profile Section */}
       <div className="mb-8">
-        <Link 
-          href="/" 
-          className="inline-flex items-center gap-2 text-accent-color hover:text-green-400 mb-6 font-medium transition-colors"
-        >
-          ← Back to Artists
-        </Link>
-        
-        {/* Artist Profile */}
         <div className="flex flex-col lg:flex-row items-start lg:items-center gap-6 mb-8">
+          {/* ✅ ИЗМЕНЕНО: Увеличен размер аватара до 180px */}
           <div className="flex-shrink-0">
             {artist?.avatar ? (
               <Image
                 src={artist.avatar}
                 alt={`${artist.name} avatar`}
-                width={120}
-                height={120}
+                width={180}
+                height={180}
                 className="rounded-full shadow-lg"
                 priority
               />
             ) : (
-              <div className="w-[120px] h-[120px] rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg">
-                <div className="text-white text-4xl font-bold">
+              <div className="w-[180px] h-[180px] rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg">
+                <div className="text-white text-6xl font-bold">
                   {artist?.name?.charAt(0).toUpperCase() || '?'}
                 </div>
               </div>
@@ -375,15 +413,25 @@ export default function ArtistPage() {
             )}
             
             {artist?.descriptionLine2 && (
-              <p className={`text-gray-400 ${
+              <p className={`text-gray-400 mb-4 ${
                 detectCyrillic(artist.descriptionLine2) ? 'font-cyrillic' : 'font-body'
               }`}>
                 {artist.descriptionLine2}
               </p>
             )}
 
+            {/* ✅ ДОБАВЛЕНО: Кнопка Discography */}
+            <div className="flex items-center gap-4 mb-4">
+              <button
+                onClick={handleScrollToDiscography}
+                className="bg-transparent border-2 border-accent-color text-accent-color hover:bg-accent-color hover:text-black px-6 py-2 rounded-full font-medium transition-all duration-150"
+              >
+                Discography
+              </button>
+            </div>
+
             {/* Artist Stats */}
-            <div className="flex flex-wrap gap-4 mt-4 text-sm text-gray-400">
+            <div className="flex flex-wrap gap-4 text-sm text-gray-400">
               <span>{stats.totalTracks} track{stats.totalTracks !== 1 ? 's' : ''}</span>
               {stats.totalReleases > 0 && (
                 <span>• {stats.totalReleases} release{stats.totalReleases !== 1 ? 's' : ''}</span>
@@ -416,31 +464,7 @@ export default function ArtistPage() {
           </div>
         )}
 
-        {/* Playback Controls */}
-        {artistTracks.length > 0 && (
-          <div className="flex flex-wrap gap-4 mb-6">
-            <PlayButton 
-              tracks={artistTracks}
-              variant="header"
-              size="medium"
-              showText
-            />
-            
-            <button
-              onClick={handleShuffleAllTracks}
-              className="flex items-center gap-2 px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded-full font-medium transition-colors"
-            >
-              🔀 Shuffle Play
-            </button>
-            
-            <button
-              onClick={handlePlayAllTracks}
-              className="flex items-center gap-2 px-6 py-3 bg-transparent border-2 border-accent-color text-accent-color hover:bg-accent-color hover:text-black rounded-full font-medium transition-all duration-150"
-            >
-              ▶️ Play All
-            </button>
-          </div>
-        )}
+        {/* ✅ УДАЛЕНО: Весь блок Playback Controls */}
 
         {artistTracks.length === 0 && !errorState.hasError && (
           <div className="mb-6 p-4 bg-yellow-900/20 border border-yellow-600/30 rounded-lg">
@@ -452,13 +476,47 @@ export default function ArtistPage() {
         )}
       </div>
 
+      {/* ✅ ДОБАВЛЕНО: Разделитель */}
+      <hr className="border-gray-700 mb-12" />
+
       {/* All Tracks Section */}
       {artistTracks.length > 0 && (
         <div className="mb-12">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold">All Tracks</h2>
-            <div className="text-sm text-gray-400">
-              {artistTracks.length} track{artistTracks.length !== 1 ? 's' : ''} available
+            {/* ✅ ИЗМЕНЕНО: Добавлены 3 иконки управления */}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handlePlayAllTracks}
+                className="w-10 h-10 bg-transparent hover:bg-card-hover-bg-color text-primary-text-color hover:text-accent-color rounded-full flex items-center justify-center transition-all"
+                title="Play all tracks"
+                aria-label="Play all tracks"
+              >
+                <div className="w-0 h-0 border-l-[6px] border-l-current border-t-[4px] border-t-transparent border-b-[4px] border-b-transparent ml-0.5" />
+              </button>
+              
+              <button
+                onClick={handleToggleShuffle}
+                className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
+                  shuffleEnabled 
+                    ? 'bg-accent-color text-black' 
+                    : 'bg-transparent hover:bg-card-hover-bg-color text-primary-text-color hover:text-accent-color'
+                }`}
+                title={shuffleEnabled ? 'Disable shuffle' : 'Enable shuffle'}
+                aria-label={shuffleEnabled ? 'Disable shuffle' : 'Enable shuffle'}
+                aria-pressed={shuffleEnabled}
+              >
+                🔀
+              </button>
+              
+              <button
+                onClick={handleShareArtist}
+                className="w-10 h-10 bg-transparent hover:bg-card-hover-bg-color text-primary-text-color hover:text-accent-color rounded-full flex items-center justify-center transition-all"
+                title="Share artist"
+                aria-label="Share artist"
+              >
+                📤
+              </button>
             </div>
           </div>
           
@@ -468,81 +526,82 @@ export default function ArtistPage() {
             showAlbumInfo={true}
           />
           
-          {artistTracks.length > 10 && (
+          {/* ✅ ИЗМЕНЕНО: Условие изменено с 10 на 4 */}
+          {artistTracks.length > 4 && (
             <div className="mt-6 text-center">
               <button
                 onClick={handleToggleAllTracks}
-                className="text-accent-color hover:text-green-400 font-medium transition-colors"
+                className="bg-accent-color hover:bg-accent-color/90 text-black px-8 py-3 rounded-full font-bold transition-all duration-150 hover:scale-105"
               >
                 {showAllTracks
-                  ? 'Show Less Tracks'
-                  : `Show All ${artistTracks.length} Tracks`}
+                  ? 'Hide'
+                  : `Show All Tracks`}
               </button>
             </div>
           )}
         </div>
       )}
 
+      {/* ✅ ДОБАВЛЕНО: Разделитель */}
+      <hr className="border-gray-700 mb-12" />
+
       {/* Discography Section */}
       {stats.totalReleases > 0 && (
-        <div className="mb-12">
+        <div className="mb-12" id="discography-section">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold">Discography</h2>
-            <button
-              onClick={handleToggleDiscography}
-              className="text-accent-color hover:text-green-400 font-medium transition-colors"
-            >
-              {showDiscography ? 'Hide' : 'Show'} Discography
-            </button>
+            {/* ✅ УДАЛЕНО: Toggle кнопка Show/Hide Discography */}
           </div>
 
-          {showDiscography && (
-            <>
-              {/* Release Type Tabs */}
-              <div className="flex flex-wrap gap-2 mb-6">
-                {(['Albums', 'EPs', 'Demos'] as const).map((tab) => {
-                  const count = artist?.[tab]?.length || 0;
-                  return (
-                    <button
-                      key={tab}
-                      onClick={() => handleTabChange(tab)}
-                      disabled={count === 0}
-                      className={`px-4 py-2 rounded-full font-medium transition-colors ${
-                        activeTab === tab
-                          ? 'bg-accent-color text-black'
-                          : count === 0
-                          ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                          : 'bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white'
-                      }`}
-                      aria-pressed={activeTab === tab}
-                    >
-                      {tab} ({count})
-                    </button>
-                  );
-                })}
-              </div>
+          {/* ✅ ИЗМЕНЕНО: Дискография всегда развернута */}
+          <>
+            {/* Release Type Tabs */}
+            <div className="flex flex-wrap gap-2 mb-6">
+              {(['Albums', 'EPs', 'Demos'] as const).map((tab) => {
+                const count = artist?.[tab]?.length || 0;
+                return (
+                  <button
+                    key={tab}
+                    onClick={() => handleTabChange(tab)}
+                    disabled={count === 0}
+                    className={`px-4 py-2 rounded-full font-medium transition-colors ${
+                      activeTab === tab
+                        ? 'bg-accent-color text-black'
+                        : count === 0
+                        ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                        : 'bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white'
+                    }`}
+                    aria-pressed={activeTab === tab}
+                  >
+                    {tab} ({count})
+                  </button>
+                );
+              })}
+            </div>
 
-              {/* Albums Display */}
-              {currentAlbums.length > 0 ? (
-                <AlbumCarousel 
-                  albums={currentAlbums} 
-                  layout="vertical"
-                  showFullTrackList={false}
-                  maxTracksPreview={5}
-                />
-              ) : (
-                <div className="text-center py-12 text-gray-400">
-                  <div className="text-4xl mb-3 opacity-50">💿</div>
-                  <div>No {activeTab.toLowerCase()} available</div>
-                  <div className="text-sm mt-1 opacity-70">
-                    This artist doesn't have any {activeTab.toLowerCase()} yet
-                  </div>
+            {/* Albums Display */}
+            {currentAlbums.length > 0 ? (
+              <AlbumCarousel 
+                albums={currentAlbums} 
+                layout="vertical"
+                showFullTrackList={true}
+                maxTracksPreview={5}
+              />
+            ) : (
+              <div className="text-center py-12 text-gray-400">
+                <div className="text-4xl mb-3 opacity-50">💿</div>
+                <div>No {activeTab.toLowerCase()} available</div>
+                <div className="text-sm mt-1 opacity-70">
+                  This artist doesn't have any {activeTab.toLowerCase()} yet
                 </div>
-              )}
-            </>
-          )}
+              </div>
+            )}
+          </>
         </div>
       )}
+
+      {/* ✅ ДОБАВЛЕНО: Разделитель */}
+      <hr className="border-gray-700 mb-12" />
 
       {/* Other Artists Section */}
       <div className="mb-12">
@@ -565,14 +624,14 @@ export default function ArtistPage() {
                       <Image
                         src={otherArtist.avatar}
                         alt={`${otherArtist.name} avatar`}
-                        width={80}
-                        height={80}
+                        width={100}
+                        height={100}
                         className="rounded-full mx-auto shadow-md group-hover:shadow-lg transition-shadow"
                         loading="lazy"
                       />
                     ) : (
-                      <div className="w-20 h-20 rounded-full bg-gradient-to-br from-gray-600 to-gray-700 flex items-center justify-center mx-auto shadow-md group-hover:shadow-lg transition-shadow">
-                        <div className="text-white text-xl font-bold">
+                      <div className="w-[100px] h-[100px] rounded-full bg-gradient-to-br from-gray-600 to-gray-700 flex items-center justify-center mx-auto shadow-md group-hover:shadow-lg transition-shadow">
+                        <div className="text-white text-2xl font-bold">
                           {otherArtist?.name?.charAt(0)?.toUpperCase() || '?'}
                         </div>
                       </div>
@@ -586,9 +645,6 @@ export default function ArtistPage() {
             })}
         </div>
       </div>
-
-
-
 
       {/* Debug Information */}
       {process.env.NODE_ENV === 'development' && (
@@ -621,7 +677,7 @@ export default function ArtistPage() {
               <div className="text-gray-400 mb-1">UI State:</div>
               <div>Active Tab: {activeTab}</div>
               <div>Show All Tracks: {showAllTracks ? '✅' : '❌'}</div>
-              <div>Show Discography: {showDiscography ? '✅' : '❌'}</div>
+              <div>Shuffle Enabled: {shuffleEnabled ? '✅' : '❌'}</div>
             </div>
           </div>
           

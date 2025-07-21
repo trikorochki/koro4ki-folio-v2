@@ -1,9 +1,11 @@
 // src/components/TrackList.tsx
 'use client';
 
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useEffect } from 'react';
 import { Track } from '@/types/music';
 import { useMusicPlayer } from '@/lib/music-player';
+import { useBatchDurations } from '@/hooks/useDuration';
+import { DurationCache } from '@/lib/duration-cache';
 
 interface TrackListProps {
   tracks: Track[];
@@ -87,12 +89,7 @@ function getAlbumName(track: Track): string {
     return track.albumName;
   }
   
-  // ❌ УБРАТЬ: Это поле не существует в типе metadata
-  // if (track.metadata?.album) {
-  //   return track.metadata.album;
-  // }
-  
-  // ✅ ЗАМЕНИТЬ: Пытаемся извлечь из имени файла
+  // ✅ Пытаемся извлечь из имени файла
   if (track.metadata?.fileName) {
     // Извлекаем название альбома из пути файла
     const pathParts = track.metadata.fileName.split('/');
@@ -116,7 +113,6 @@ function getAlbumName(track: Track): string {
   return 'Unknown Album';
 }
 
-
 // ================================================================================
 // MAIN COMPONENT
 // ================================================================================
@@ -128,6 +124,30 @@ export default function TrackList({
   showArtist = false 
 }: TrackListProps) {
   const { currentTrack, isPlaying, playTrack, pauseTrack, setQueue } = useMusicPlayer();
+
+  // ✅ ДОБАВЛЕНО: Интеграция системы длительности треков
+  const trackUrls = useMemo(() => {
+    return tracks.filter(track => track && track.id && track.file).map(track => ({
+      id: track.id,
+      url: track.file
+    }));
+  }, [tracks]);
+
+  const { durations, loading: durationsLoading, loadAllDurations } = useBatchDurations(trackUrls);
+
+  // ✅ ДОБАВЛЕНО: Загрузка длительностей при монтировании компонента
+  useEffect(() => {
+    if (trackUrls.length > 0) {
+      // Инициализируем кеш
+      DurationCache.load();
+      // Загружаем длительности с небольшой задержкой для оптимизации
+      const timeoutId = setTimeout(() => {
+        loadAllDurations();
+      }, 100);
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [trackUrls.length, loadAllDurations]);
 
   // ================================================================================
   // MEMOIZED HANDLERS
@@ -175,6 +195,37 @@ export default function TrackList({
     handleDoubleClick(track);
   }, [handleDoubleClick]);
 
+  // ✅ ДОБАВЛЕНО: Share функциональность для треков
+  const handleShareTrack = useCallback(async (e: React.MouseEvent, track: Track) => {
+    e.stopPropagation();
+    
+    const trackUrl = `${window.location.origin}${window.location.pathname}`;
+    const shareData = {
+      title: `${track.title} - KR4 Neuromusic`,
+      text: `Послушай трек "${track.title}"`,
+      url: trackUrl
+    };
+
+    try {
+      if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+        await navigator.share(shareData);
+        console.log('✅ Track shared successfully');
+      } else {
+        // Fallback: копирование в буфер обмена
+        await navigator.clipboard.writeText(trackUrl);
+        console.log('✅ Track URL copied to clipboard');
+      }
+    } catch (error) {
+      console.warn('⚠️ Share failed:', error);
+      try {
+        await navigator.clipboard.writeText(trackUrl);
+        console.log('✅ Track URL copied to clipboard as fallback');
+      } catch (clipboardError) {
+        console.error('❌ Failed to copy to clipboard:', clipboardError);
+      }
+    }
+  }, []);
+
   // ================================================================================
   // MEMOIZED VALUES
   // ================================================================================
@@ -190,6 +241,9 @@ export default function TrackList({
       const trackNumber = getTrackNumber(track, index);
       const originalTitle = getOriginalTitle(track);
       const albumName = getAlbumName(track);
+      
+      // ✅ ДОБАВЛЕНО: Получаем длительность из кеша или батчевой загрузки
+      const trackDuration = durations[track.id] || DurationCache.get(track.id) || track.duration || '--:--';
 
       return (
         <div
@@ -201,7 +255,7 @@ export default function TrackList({
               ? 'bg-accent-color text-black shadow-lg'
               : 'hover:bg-card-hover-bg-color hover:scale-[1.01]'
           }`}
-          title={`${track.title}${track.duration ? ` - ${track.duration}` : ''}`}
+          title={`${track.title}${trackDuration !== '--:--' ? ` - ${trackDuration}` : ''}`}
           role="button"
           tabIndex={0}
           onKeyDown={(e) => {
@@ -272,16 +326,16 @@ export default function TrackList({
             )}
           </div>
 
-          {/* Duration */}
-          <div className={`text-sm font-mono transition-colors ${
+          {/* ✅ ОБНОВЛЕНО: Duration Display с поддержкой динамической загрузки */}
+          <div className={`text-sm font-mono transition-colors min-w-[45px] text-right ${
             isActive ? 'text-black/70' : 'text-secondary-text-color group-hover:text-primary-text-color'
-          }`}>
-            {track.duration || '--:--'}
+          } ${durationsLoading && trackDuration === '--:--' ? 'animate-pulse' : ''}`}>
+            {trackDuration}
           </div>
 
-          {/* Hover Play Button */}
+          {/* ✅ ОБНОВЛЕНО: Hover Actions с Share кнопкой */}
           {!isActive && (
-            <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
               <button
                 onClick={(e) => handlePlayButtonClick(e, track)}
                 className="w-8 h-8 bg-accent-color hover:bg-green-400 text-black rounded-full flex items-center justify-center transition-all hover:scale-110"
@@ -290,6 +344,16 @@ export default function TrackList({
                 type="button"
               >
                 <div className="w-0 h-0 border-l-[6px] border-l-black border-t-[4px] border-t-transparent border-b-[4px] border-b-transparent ml-0.5" />
+              </button>
+              
+              <button
+                onClick={(e) => handleShareTrack(e, track)}
+                className="w-8 h-8 bg-gray-700 hover:bg-gray-600 text-white rounded-full flex items-center justify-center transition-all hover:scale-110"
+                title="Share track"
+                aria-label={`Share ${track.title}`}
+                type="button"
+              >
+                📤
               </button>
             </div>
           )}
@@ -303,9 +367,12 @@ export default function TrackList({
     compact, 
     showArtist, 
     showAlbumInfo, 
+    durations,  // ✅ ДОБАВЛЕНО в dependencies
+    durationsLoading,  // ✅ ДОБАВЛЕНО в dependencies
     handleTrackClick, 
     handleDoubleClick, 
-    handlePlayButtonClick
+    handlePlayButtonClick,
+    handleShareTrack  // ✅ ДОБАВЛЕНО в dependencies
   ]);
 
   // ================================================================================

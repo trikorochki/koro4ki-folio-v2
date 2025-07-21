@@ -93,8 +93,9 @@ export async function generatePlaylistData(): Promise<PlaylistData> {
               title: trackTitle,
               originalTitle: trackTitle,
               file: blob.url,
-              duration: '3:00', // Placeholder, можно добавить реальное определение
+              duration: '--:--', // ✅ ИЗМЕНЕНО: Будет загружено динамически через DurationCache
               albumId: album.id,
+              albumName: albumName, // ✅ ДОБАВЛЕНО: Исправление из предыдущих рекомендаций
               artistId: artistName,
             };
             

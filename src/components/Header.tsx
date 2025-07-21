@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useMusicPlayer } from '@/lib/music-player';
@@ -11,6 +12,10 @@ export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [playlistData, setPlaylistData] = useState<PlaylistData>({});
   const { setQueue, playTrack, isPlaying, currentTrack, pauseTrack, shuffleAndPlay } = useMusicPlayer();
+  
+  // ✅ ДОБАВЛЕНО: Определение текущего роута
+  const pathname = usePathname();
+  const isArtistPage = pathname?.startsWith('/artist/');
 
   useEffect(() => {
     const fetchPlaylistData = async () => {
@@ -83,30 +88,31 @@ export default function Header() {
           />
         </Link>
 
-        {/* ✅ ИСПРАВЛЕНО: Упрощенная кнопка Random */}
-        <button 
-          className="header-play-random-btn flex items-center gap-3 bg-accent-color hover:bg-green-400 text-black font-bold px-6 py-3 rounded-full font-body transition-all duration-200 hover:scale-105"
-          onClick={handlePlayRandom}
-          disabled={Object.keys(playlistData).length === 0}
-        >
-          <div className="play-circle w-5 h-5 flex items-center justify-center">
-            {isPlaying && currentTrack ? (
-              <div className="pause-symbol flex gap-1">
-                <div className="w-1 h-4 bg-black"></div>
-                <div className="w-1 h-4 bg-black"></div>
-              </div>
-            ) : (
-              <div className="play-triangle w-0 h-0 border-l-[6px] border-l-black border-t-[4px] border-t-transparent border-b-[4px] border-b-transparent ml-0.5"></div>
-            )}
-          </div>
-          {/* ✅ ИСПРАВЛЕНО: Убрали "Play" - оставили только "Random" */}
-          <span className="play-text hidden sm:inline">
-            Random
-          </span>
-        </button>
+        {/* ✅ ИЗМЕНЕНО: Условное отображение Random кнопки */}
+        {!isArtistPage && (
+          <button 
+            className="header-play-random-btn flex items-center gap-3 bg-accent-color hover:bg-green-400 text-black font-bold px-6 py-3 rounded-full font-body transition-all duration-200 hover:scale-105"
+            onClick={handlePlayRandom}
+            disabled={Object.keys(playlistData).length === 0}
+          >
+            <div className="play-circle w-5 h-5 flex items-center justify-center">
+              {isPlaying && currentTrack ? (
+                <div className="pause-symbol flex gap-1">
+                  <div className="w-1 h-4 bg-black"></div>
+                  <div className="w-1 h-4 bg-black"></div>
+                </div>
+              ) : (
+                <div className="play-triangle w-0 h-0 border-l-[6px] border-l-black border-t-[4px] border-t-transparent border-b-[4px] border-b-transparent ml-0.5"></div>
+              )}
+            </div>
+            <span className="play-text hidden sm:inline">
+              Random
+            </span>
+          </button>
+        )}
 
-        {/* Навигация */}
-        <nav className="site-nav">
+        {/* ✅ ДОБАВЛЕНО: Центрирование навигации когда кнопка скрыта */}
+        <nav className={`site-nav ${isArtistPage ? 'mx-auto' : ''}`}>
           <div className="dropdown relative">
             <button 
               className="dropdown-btn border border-secondary-text-color text-secondary-text-color hover:text-primary-text-color hover:border-primary-text-color px-4 py-2 rounded-full transition-colors font-body"
