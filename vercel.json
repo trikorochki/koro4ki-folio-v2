@@ -30,24 +30,6 @@
       "use": "@vercel/static"
     }
   ],
-  "routes": [
-    {
-      "src": "/api/check-location",
-      "dest": "/api/check-location.py"
-    },
-    {
-      "src": "/api/listen",
-      "dest": "/api/listen.py"
-    },
-    {
-      "src": "/api/stats",
-      "dest": "/api/stats.py"
-    },
-    {
-      "src": "/admin",
-      "dest": "/admin.html"
-    }
-  ],
   "rewrites": [
     {
       "source": "/music/(.*)",
