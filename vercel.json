@@ -6,19 +6,23 @@
       "use": "@vercel/python"
     },
     {
-      "src": "*.html",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "style.css",
-      "use": "@vercel/static"
+      "src": "api/stats.py",
+      "use": "@vercel/python"
     },
     {
       "src": "api/check-location.js",
       "use": "@vercel/node"
     },
     {
+      "src": "*.html",
+      "use": "@vercel/static"
+    },
+    {
       "src": "*.js",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "style.css",
       "use": "@vercel/static"
     },
     {
@@ -28,10 +32,6 @@
     {
       "src": "favicon.ico",
       "use": "@vercel/static"
-    },
-    {
-      "src": "api/stats.py",
-      "use": "@vercel/python"
     }
   ],
   "routes": [
@@ -40,7 +40,7 @@
       "dest": "api/listen.py"
     },
     {
-      "src": "/api/stats", 
+      "src": "/api/stats",
       "dest": "api/stats.py"
     },
     {
@@ -51,6 +51,38 @@
       "src": "/admin", 
       "dest": "/admin.html" 
     }
+  ],
+  "rewrites": [
+    {
+      "source": "/music/:path*",
+      "destination": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/:path*"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/music/:path*",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=2592000"
+        },
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, HEAD, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers", 
+          "value": "Range, Content-Type, Authorization"
+        },
+        {
+          "key": "Access-Control-Expose-Headers",
+          "value": "Content-Length, Content-Range, Accept-Ranges"
+        }
+      ]
+    }
   ]
-
 }
