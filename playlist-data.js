@@ -251,7 +251,28 @@ window.artistData = {
             }
         ],
         "eps": [],
-        "demos": []
+        "demos": [
+            {
+                "name": "Крест и вексель",
+                "cover": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/jahkorochki/Demo. Крест и вексель/cover.jpg",
+                "tracks": [
+                    {
+                        "num": 1,
+                        "title": "Звезда смерти",
+                        "originalTitle": "Звезда смерти",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/jahkorochki/Demo. Крест и вексель/Звезда смерти.mp3",
+                        "duration": 273
+                    },
+                    {
+                        "num": 2,
+                        "title": "Однозначно",
+                        "originalTitle": "Однозначно",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/jahkorochki/Demo. Крест и вексель/Однозначно.mp3",
+                        "duration": 210
+                    }
+                ]
+            }
+        ]
     },
     "nukorochki": {
         "name": "NÜKORO4KI",
