@@ -2,15 +2,15 @@
   "version": 2,
   "builds": [
     {
+      "src": "api/check-location.py",
+      "use": "@vercel/python"
+    },  
+    {
       "src": "api/listen.py",
       "use": "@vercel/python"
     },
     {
       "src": "api/stats.py",
-      "use": "@vercel/python"
-    },
-    {
-      "src": "api/check-location.py",
       "use": "@vercel/python"
     },
     {
@@ -30,22 +30,10 @@
       "use": "@vercel/static"
     }
   ],
-  "routes": [
+  "rewrites": [
     {
-      "src": "/api/listen",
-      "dest": "/api/listen.py"
-    },
-    {
-      "src": "/api/stats",
-      "dest": "/api/stats.py"
-    },
-    {
-      "src": "/api/check-location",
-      "dest": "/api/check-location.py"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "$1"
+      "source": "/music/(.*)",
+      "destination": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/$1"
     }
   ]
 }
