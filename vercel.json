@@ -29,11 +29,5 @@
       "src": "images/**",
       "use": "@vercel/static"
     }
-  ],
-  "rewrites": [
-    {
-      "source": "/music/(.*)",
-      "destination": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/$1"
-    }
   ]
 }

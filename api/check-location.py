@@ -6,14 +6,14 @@ class handler(BaseHTTPRequestHandler):
     def do_GET(self):
         # Получаем геолокацию из заголовков Vercel
         country_code = self.headers.get('X-Vercel-IP-Country', 'XX')
-        ip_address = self.headers.get('X-Forwarded-For', 'Unknown')
+        ip_address = self.headers.get('X-Forwarded-For', '127.0.0.1')
         
         is_russian = country_code == 'RU'
         
         response_data = {
             'isRussian': is_russian,
             'country': country_code,
-            'ip': ip_address.split(',')[0] if ip_address else 'Unknown',
+            'ip': ip_address.split(',')[0] if ip_address else '127.0.0.1',
             'timestamp': datetime.now(timezone.utc).isoformat(),
             'confidence': 0.99 if country_code != 'XX' else 0.5
         }

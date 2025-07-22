@@ -7,4 +7,5 @@
 .vercel
 .DS_Store
 **/.DS_Store
-
+/.vercel
+/__pycache__
