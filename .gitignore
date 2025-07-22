@@ -1,10 +1,11 @@
 .env*.local
 /venv
 .env*
-/music
+/loc-music
 .env
 .env.development.local
 .vercel
 .DS_Store
 **/.DS_Store
-
+/.vercel
+/__pycache__

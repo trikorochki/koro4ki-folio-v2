@@ -251,7 +251,7 @@ def upload_single_album_folder(album_folder_name, custom_blob_path=None):
 
 if __name__ == '__main__':
     # Вариант 1: Загрузить альбом из папки music/
-    upload_single_album_folder("nukorochki/Album. Grenzgänger")
+    upload_single_album_folder("jahkorochki/Album. Deportation from the country of refugees")
     
     # Вариант 2: Загрузить альбом из произвольной папки
     # upload_album("C:/MyMusic/New Album", "music/artist/new_album")

@@ -2,8 +2,20 @@
   "version": 2,
   "builds": [
     {
+      "src": "api/check-location.py",
+      "use": "@vercel/python"
+    },  
+    {
       "src": "api/listen.py",
       "use": "@vercel/python"
+    },
+    {
+      "src": "api/stats.py",
+      "use": "@vercel/python"
+    },
+    {
+      "src": "*.js",
+      "use": "@vercel/static"
     },
     {
       "src": "*.html",
@@ -14,31 +26,8 @@
       "use": "@vercel/static"
     },
     {
-      "src": "*.js",
-      "use": "@vercel/static"
-    },
-    {
       "src": "images/**",
       "use": "@vercel/static"
-    },
-    {
-      "src": "favicon.ico",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "api/stats.py",
-      "use": "@vercel/python"
     }
-  ],
-  "routes": [
-    {
-      "src": "/api/listen",
-      "dest": "api/listen.py"
-    },
-    {
-      "src": "/api/stats",
-      "dest": "api/stats.py"
-    },
-    { "src": "/admin", "dest": "/admin.html" }
   ]
 }
