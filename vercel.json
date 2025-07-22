@@ -2,11 +2,27 @@
   "version": 2,
   "builds": [
     {
-      "src": "api/*.py",
+      "src": "api/check-location.py",
+      "use": "@vercel/python"
+    },  
+    {
+      "src": "api/listen.py",
       "use": "@vercel/python"
     },
     {
-      "src": "*.{js,html,css, ico}",
+      "src": "api/stats.py",
+      "use": "@vercel/python"
+    },
+    {
+      "src": "*.js",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "*.html",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "style.css",
       "use": "@vercel/static"
     },
     {
