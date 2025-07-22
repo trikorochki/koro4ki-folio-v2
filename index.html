@@ -11,6 +11,25 @@
     
     <link rel="stylesheet" href="style.css">
     <link rel="icon" href="favicon.ico">
+
+    <!-- Скрипт редиректа для мобильных устройств -->
+    <script>
+    (function() {
+        // Проверка на все типы мобильных устройств
+        var isMobile = /Mobi|Android|iPhone|iPad|iPod|BlackBerry|Windows Phone|Opera Mini|IEMobile|Mobile Safari/i.test(navigator.userAgent);
+        
+        // Дополнительная проверка через screen size для планшетов
+        var isSmallScreen = window.screen && (window.screen.width <= 768 || window.screen.height <= 768);
+        
+        // Проверка touch events для более точного определения
+        var isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+        
+        if ((isMobile || (isSmallScreen && isTouchDevice)) && window.location.hostname === 'kr4.pro') {
+            console.log('📱 Mobile device detected, redirecting to kr4.vercel.app');
+            window.location.replace('https://kr4.vercel.app' + window.location.pathname + window.location.search);
+        }
+    })();
+    </script>
 </head>
 <body>
     <!-- ИЗМЕНЕНИЕ: Добавлена кнопка Play Random в шапку -->
@@ -70,8 +89,8 @@
                 <p>Satirical rap dismantling social pretenses.</p>
             </a>
             <a href="artist.html?artist=nukorochki" class="artist-choice-card">
-                <img src="images/nukorochki.jpg" alt="Аватар NÜKORO4KI">
-                <h2>NÜKORO4KI</h2>
+                <img src="images/nukorochki.jpg" alt="Аватар NÜKORO4KI">
+                <h2>NÜKORO4KI</h2>
                 <p>Experimental metal with no fucking frames.</p>
             </a>
             <a href="artist.html?artist=jahkorochki" class="artist-choice-card">
