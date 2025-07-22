@@ -34,6 +34,7 @@
       "use": "@vercel/static"
     }
   ],
+  
   "rewrites": [
     {
       "source": "/music/(.*)",
