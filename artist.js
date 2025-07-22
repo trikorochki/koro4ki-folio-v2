@@ -1,5 +1,66 @@
 document.addEventListener('DOMContentLoaded', () => {
     
+    // === ДОБАВЛЕНО: Переменные для прокси функциональности ===
+    let useProxyForTracks = false;
+    let locationDetected = false;
+
+    // === ДОБАВЛЕНО: Функция инициализации определения локации ===
+    const initializeLocationDetection = async () => {
+        try {
+            console.log('🌍 Initializing location detection...');
+            
+            // Определяем является ли пользователь российским
+            const isRussian = await LocationDetector.detectRussianUser();
+            useProxyForTracks = isRussian;
+            locationDetected = true;
+            
+            if (isRussian) {
+                console.log('🇷🇺 Russian user detected - proxy mode enabled');
+            } else {
+                console.log('🌍 International user - direct connection mode');
+            }
+            
+            // Тест подключения к proxy (для отладки)
+            const connectionTest = await LocationDetector.testConnection();
+            console.log('🔗 Proxy connection test:', connectionTest);
+            
+        } catch (error) {
+            console.error('❌ Failed to initialize location detection:', error);
+            locationDetected = true; // Помечаем как завершенную даже при ошибке
+        }
+    };
+
+    // === ДОБАВЛЕНО: Функция получения URL трека с учетом прокси ===
+    const getTrackUrlForPlayback = (track) => {
+        if (!locationDetected) {
+            // Если локация еще не определена, используем оригинальный URL
+            console.warn('⏳ Location not yet detected, using original URL');
+            return track.file;
+        }
+        
+        return LocationDetector.processTrackUrl(track.file, useProxyForTracks);
+    };
+
+    // === ДОБАВЛЕНО: Функция отправки аналитики с информацией о прокси ===
+    const logPlayerEvent = async (eventType, trackData) => {
+        if (!trackData || !trackData.file) return;
+
+        try {
+            await fetch('/api/listen', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    trackId: trackData.file,
+                    eventType: eventType,
+                    proxyUsed: useProxyForTracks // Добавить информацию о proxy
+                }),
+            });
+            console.log(`Analytics Event: '${eventType}' sent (proxy: ${useProxyForTracks})`);
+        } catch (error) {
+            console.error(`Failed to log analytics event '${eventType}':`, error);
+        }
+    };
+    
     /**
      * Главный управляющий модуль для страницы артиста.
      * Инкапсулирует состояние, логику рендеринга, навигацию и управление плеером.
@@ -28,7 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
         /**
          * Точка входа. Инициализирует всё приложение.
          */
-        init() {
+        async init() {
             if (typeof window.artistData === 'undefined') {
                 document.body.innerHTML = '<h1>Ошибка: Данные артистов не найдены.</h1>';
                 console.error('window.artistData не определен.');
@@ -47,6 +108,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             this.bindEvents();
             this.handleNavigation();
+            
+            // === ДОБАВЛЕНО: Инициализация определения локации ===
+            await initializeLocationDetection();
         },
         
         /**
@@ -133,7 +197,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         },
 
-        // Добавляем методы для обработки кнопок Play
+        // === ОБНОВЛЕНО: Добавлена поддержка прокси URL ===
         handleAllTracksPlay() {
             if (this.state.currentPlaylistSource === 'all-tracks' && this.player.isPlaying) {
                 this.player.pause();
@@ -146,11 +210,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (this.state.isShuffleOn) {
                     this.state.currentPlaylist = this.shuffleArray(this.state.currentPlaylist);
                 }
-                this.player.load(this.state.currentPlaylist[0]);
+                const firstTrack = this.state.currentPlaylist[0];
+                const trackUrl = getTrackUrlForPlayback(firstTrack);
+                this.player.load({ ...firstTrack, file: trackUrl });
                 this.player.play();
             }
         },
 
+        // === ОБНОВЛЕНО: Добавлена поддержка прокси URL ===
         handleAlbumPlay() {
             if (this.state.currentPlaylistSource === 'album' && this.player.isPlaying) {
                 this.player.pause();
@@ -170,7 +237,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (this.state.isShuffleOn) {
                     this.state.currentPlaylist = this.shuffleArray(this.state.currentPlaylist);
                 }
-                this.player.load(this.state.currentPlaylist[0]);
+                const firstTrack = this.state.currentPlaylist[0];
+                const trackUrl = getTrackUrlForPlayback(firstTrack);
+                this.player.load({ ...firstTrack, file: trackUrl });
                 this.player.play();
             }
         },
@@ -225,6 +294,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // --- Логика воспроизведения ---
 
+        // === ОБНОВЛЕНО: Добавлена поддержка прокси URL ===
         setPlaylist(source, trackData) {
             this.state.currentPlaylistSource = source;
             let basePlaylist;
@@ -245,24 +315,30 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.applyShuffle();
             }
 
-            this.player.load(this.state.currentPlaylist[0]);
+            const firstTrack = this.state.currentPlaylist[0];
+            const trackUrl = getTrackUrlForPlayback(firstTrack);
+            this.player.load({ ...firstTrack, file: trackUrl });
             this.player.play();
         },
 
+        // === ОБНОВЛЕНО: Добавлена поддержка прокси URL ===
         playNextTrack() {
             const currentIndex = this.state.currentPlaylist.findIndex(t => t.file === this.state.currentTrack.file);
             if (currentIndex !== -1 && currentIndex < this.state.currentPlaylist.length - 1) {
                 const nextTrack = this.state.currentPlaylist[currentIndex + 1];
-                this.player.load(nextTrack);
+                const trackUrl = getTrackUrlForPlayback(nextTrack);
+                this.player.load({ ...nextTrack, file: trackUrl });
                 this.player.play();
             }
         },
 
+        // === ОБНОВЛЕНО: Добавлена поддержка прокси URL ===
         playPrevTrack() {
             const currentIndex = this.state.currentPlaylist.findIndex(t => t.file === this.state.currentTrack.file);
             if (currentIndex > 0) {
                 const prevTrack = this.state.currentPlaylist[currentIndex - 1];
-                this.player.load(prevTrack);
+                const trackUrl = getTrackUrlForPlayback(prevTrack);
+                this.player.load({ ...prevTrack, file: trackUrl });
                 this.player.play();
             }
         },
@@ -718,7 +794,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         load(track) {
             if (this.isPlaying && !this.listenCounted) {
-                this.logEvent('track_skipped');
+                logPlayerEvent('track_skipped', this.currentTrack);
             }
             this.currentTrack = track;
             this.listenCounted = false;
@@ -731,20 +807,10 @@ document.addEventListener('DOMContentLoaded', () => {
         togglePlayPause() { this.isPlaying ? this.pause() : this.play(); }
         scrub(percentage) { if(this.audio.duration) this.audio.currentTime = this.audio.duration * percentage; }
         
+        // === ОБНОВЛЕНО: Интеграция с новой системой аналитики ===
         async logEvent(eventType) {
             if (!this.currentTrack) return;
-            try {
-                await fetch('/api/listen', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        trackId: this.currentTrack.file,
-                        eventType: eventType
-                    }),
-                });
-            } catch (error) {
-                console.error(`Ошибка отправки аналитики: ${eventType}`, error);
-            }
+            await logPlayerEvent(eventType, this.currentTrack);
         }
 
         _bindAudioEvents() {
