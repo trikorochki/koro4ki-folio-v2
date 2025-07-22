@@ -10,7 +10,7 @@
       "use": "@vercel/python"
     },
     {
-      "src": "api/check-location.js",
+      "src": "pages/api/check-location.js",
       "use": "@vercel/node"
     },
     {
@@ -33,7 +33,7 @@
     },
     {
       "src": "/api/check-location",
-      "dest": "api/check-location.js"
+      "dest": "pages/api/check-location.js"
     },
     {
       "src": "/admin",
