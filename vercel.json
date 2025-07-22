@@ -33,5 +33,16 @@
       "src": "images/**",
       "use": "@vercel/static"
     }
+  ],
+  "routes": [
+    {
+      "src": "/api/listen",
+      "dest": "api/listen.py"
+    },
+    {
+      "src": "/api/stats",
+      "dest": "api/stats.py"
+    },
+    { "src": "/admin", "dest": "/admin.html" }
   ]
 }
