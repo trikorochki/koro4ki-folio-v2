@@ -4,9 +4,26 @@ const LocationDetector = {
   apiEndpoint: 'https://api.kr4.pro/api/check-location',
   proxyEndpoint: 'https://api.kr4.pro/music/',
   
-  async detectRussianUser() {
-    // Кэш на время сессии
-    if (this.cachedResult !== null) {
+  async detectRussianUser(forceRefresh = false) {
+    // Отладочная информация для диагностики VPN
+    console.log('🔍 Debug Info:', {
+      cached: this.cachedResult,
+      localStorage: localStorage.getItem('lastLocationDetection'),
+      language: navigator.language,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      forceRefresh: forceRefresh
+    });
+    
+    // Если принудительное обновление - очистить весь кэш
+    if (forceRefresh) {
+      this.cachedResult = null;
+      localStorage.removeItem('lastLocationDetection');
+      console.log('🔄 Forced cache refresh requested');
+    }
+    
+    // Кэш на время сессии (если не принудительное обновление)
+    if (this.cachedResult !== null && !forceRefresh) {
+      console.log('📱 Using session cache:', this.cachedResult);
       return this.cachedResult;
     }
     
@@ -19,7 +36,7 @@ const LocationDetector = {
           'Accept': 'application/json',
           'X-Requested-With': 'XMLHttpRequest'
         },
-        cache: 'no-cache',
+        cache: forceRefresh ? 'no-cache' : 'default',
         signal: AbortSignal.timeout(10000)
       });
       
@@ -42,7 +59,8 @@ const LocationDetector = {
         confidence: data.confidence,
         source: data.source,
         method: data.method || 'unknown',
-        ip: data.ip
+        ip: data.ip,
+        vpsDetection: true
       });
       
       // Аналитика: отправляем информацию об использовании proxy
@@ -63,7 +81,8 @@ const LocationDetector = {
       console.log('🔄 Using browser fallback detection:', {
         result: this.cachedResult,
         language: navigator.language,
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        fallbackUsed: true
       });
       
       return this.cachedResult;
@@ -87,7 +106,17 @@ const LocationDetector = {
       }
     });
     
-    return hasRussianLanguage || hasMoscowTimezone || hasRussianInput;
+    // Логирование для отладки
+    console.log('🔄 Browser fallback analysis:', {
+      language: navigator.language,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      russianLanguage: hasRussianLanguage,
+      moscowTimezone: hasMoscowTimezone,
+      russianInput: hasRussianInput
+    });
+    
+    // ИСПРАВЛЕНО: При VPN приоритет языку браузера, timezone менее надежен
+    return hasRussianLanguage || hasRussianInput;
   },
   
   async sendProxyAnalytics(isRussian, country, confidence) {
@@ -135,7 +164,7 @@ const LocationDetector = {
     return proxyUrl;
   },
   
-  // Методы для отладки
+  // Методы для отладки и управления
   async testConnection() {
     try {
       const response = await fetch(`${this.apiEndpoint.replace('/api/check-location', '/health')}`, {
@@ -160,7 +189,55 @@ const LocationDetector = {
   
   resetCache() {
     this.cachedResult = null;
-    console.log('🔄 Location detection cache cleared');
+    localStorage.removeItem('lastLocationDetection');
+    console.log('🔄 Location detection cache cleared completely');
+  },
+  
+  // НОВОЕ: Принудительная перепроверка локации (для пользователей с VPN)
+  async forceLocationRefresh() {
+    console.log('🔄 Forcing location refresh...');
+    this.resetCache();
+    return await this.detectRussianUser(true);
+  },
+  
+  // НОВОЕ: Диагностика всей системы
+  async runDiagnostics() {
+    console.log('🔍 Running LocationDetector diagnostics...');
+    
+    const diagnostics = {
+      timestamp: new Date().toISOString(),
+      
+      // Browser info
+      browser: {
+        language: navigator.language,
+        languages: navigator.languages,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        userAgent: navigator.userAgent.substring(0, 100)
+      },
+      
+      // Cache status
+      cache: {
+        sessionCache: this.cachedResult,
+        localStorage: localStorage.getItem('lastLocationDetection')
+      },
+      
+      // API test
+      apiConnection: await this.testConnection(),
+      
+      // Fresh location check
+      freshDetection: null
+    };
+    
+    try {
+      diagnostics.freshDetection = await this.detectRussianUser(true);
+    } catch (error) {
+      diagnostics.freshDetection = { error: error.message };
+    }
+    
+    console.table(diagnostics.browser);
+    console.log('🔍 Full diagnostics:', diagnostics);
+    
+    return diagnostics;
   },
   
   // Получить статистику proxy
@@ -174,34 +251,47 @@ const LocationDetector = {
   }
 };
 
-// Сохранение в localStorage для персистентности между сессиями
+// ОБНОВЛЕНО: Улучшенное сохранение в localStorage
 LocationDetector.originalDetectRussianUser = LocationDetector.detectRussianUser;
-LocationDetector.detectRussianUser = async function() {
-  const result = await this.originalDetectRussianUser();
+LocationDetector.detectRussianUser = async function(forceRefresh = false) {
+  const result = await this.originalDetectRussianUser(forceRefresh);
   
-  // Сохраняем результат и время детекции
-  localStorage.setItem('lastLocationDetection', JSON.stringify({
-    result,
-    timestamp: Date.now(),
-    ttl: 24 * 60 * 60 * 1000 // 24 часа
-  }));
+  // Сохраняем результат только если не принудительное обновление
+  if (!forceRefresh) {
+    localStorage.setItem('lastLocationDetection', JSON.stringify({
+      result,
+      timestamp: Date.now(),
+      ttl: 24 * 60 * 60 * 1000, // 24 часа
+      userAgent: navigator.userAgent.substring(0, 50),
+      language: navigator.language
+    }));
+  }
   
   return result;
 };
 
-// Загрузка из кэша при инициализации
+// УЛУЧШЕНО: Загрузка из кэша с дополнительными проверками
 (() => {
   try {
     const cached = localStorage.getItem('lastLocationDetection');
     if (cached) {
-      const { result, timestamp, ttl } = JSON.parse(cached);
+      const { result, timestamp, ttl, userAgent, language } = JSON.parse(cached);
       
-      // Проверяем не истек ли кэш
-      if (Date.now() - timestamp < ttl) {
+      // Проверяем не истек ли кэш И не изменился ли браузер/язык
+      const isValid = Date.now() - timestamp < ttl;
+      const isSameBrowser = userAgent === navigator.userAgent.substring(0, 50);
+      const isSameLanguage = language === navigator.language;
+      
+      if (isValid && isSameBrowser && isSameLanguage) {
         LocationDetector.cachedResult = result;
-        console.log('📱 Loaded location from localStorage cache:', result);
+        console.log('📱 Loaded location from localStorage cache:', {
+          result,
+          age: Math.round((Date.now() - timestamp) / 1000 / 60),
+          minutes: 'minutes ago'
+        });
       } else {
         localStorage.removeItem('lastLocationDetection');
+        console.log('🔄 Cache invalidated:', { isValid, isSameBrowser, isSameLanguage });
       }
     }
   } catch (error) {
@@ -213,9 +303,15 @@ LocationDetector.detectRussianUser = async function() {
 // Глобальная доступность
 window.LocationDetector = LocationDetector;
 
+// НОВОЕ: Глобальные методы для быстрой диагностики
+window.clearLocationCache = () => LocationDetector.resetCache();
+window.forceLocationRefresh = () => LocationDetector.forceLocationRefresh();
+window.runLocationDiagnostics = () => LocationDetector.runDiagnostics();
+
 // Отладочная информация
-console.log('🚀 LocationDetector v2.0 initialized:', {
+console.log('🚀 LocationDetector v2.1 initialized:', {
   endpoint: LocationDetector.apiEndpoint,
   proxy: LocationDetector.proxyEndpoint,
-  cachedResult: LocationDetector.cachedResult
+  cachedResult: LocationDetector.cachedResult,
+  globalMethods: ['clearLocationCache()', 'forceLocationRefresh()', 'runLocationDiagnostics()']
 });
