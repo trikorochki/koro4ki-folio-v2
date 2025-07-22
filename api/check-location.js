@@ -1,3 +1,4 @@
+// api/check-location.js
 export default function handler(req, res) {
   const country_code = req.headers['x-vercel-ip-country'] || 'XX';
   const ip_address = req.headers['x-forwarded-for'] || 'Unknown';
