@@ -4,6 +4,47 @@ document.addEventListener('DOMContentLoaded', () => {
     
     if (!playRandomBtn || !playerFooter) return;
 
+    // === ДОБАВЛЕНО: Переменные для прокси функциональности ===
+    let useProxyForTracks = false;
+    let locationDetected = false;
+
+    // === ДОБАВЛЕНО: Функция инициализации определения локации ===
+    const initializeLocationDetection = async () => {
+        try {
+            console.log('🌍 Initializing location detection...');
+            
+            // Определяем является ли пользователь российским
+            const isRussian = await LocationDetector.detectRussianUser();
+            useProxyForTracks = isRussian;
+            locationDetected = true;
+            
+            if (isRussian) {
+                console.log('🇷🇺 Russian user detected - proxy mode enabled');
+            } else {
+                console.log('🌍 International user - direct connection mode');
+            }
+            
+            // Тест подключения к proxy (для отладки)
+            const connectionTest = await LocationDetector.testConnection();
+            console.log('🔗 Proxy connection test:', connectionTest);
+            
+        } catch (error) {
+            console.error('❌ Failed to initialize location detection:', error);
+            locationDetected = true; // Помечаем как завершенную даже при ошибке
+        }
+    };
+
+    // === ДОБАВЛЕНО: Функция получения URL трека с учетом прокси ===
+    const getTrackUrlForPlayback = (track) => {
+        if (!locationDetected) {
+            // Если локация еще не определена, используем оригинальный URL
+            console.warn('⏳ Location not yet detected, using original URL');
+            return track.file;
+        }
+        
+        return LocationDetector.processTrackUrl(track.file, useProxyForTracks);
+    };
+
     // --- Элементы плеера ---
     const audio = document.getElementById('audio-source');
     const playPauseBtn = document.getElementById('play-pause-btn');
@@ -29,7 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
         playPauseBtn.textContent = isPlaying ? '⏸' : '▶';
     };
 
-    // --- НОВЫЙ БЛОК: Универсальная функция для отправки событий аналитики ---
+    // === ОБНОВЛЕНО: Универсальная функция для отправки событий аналитики с информацией о прокси ===
     const logPlayerEvent = async (eventType) => {
         // Убеждаемся, что у нас есть трек для отправки данных
         if (!currentTrackForAnalytics || !currentTrackForAnalytics.file) return;
@@ -41,10 +82,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     trackId: currentTrackForAnalytics.file,
-                    eventType: eventType
+                    eventType: eventType,
+                    proxyUsed: useProxyForTracks // Добавить информацию о proxy
                 }),
             });
-            console.log(`Analytics Event: '${eventType}' for track '${currentTrackForAnalytics.title}' sent.`);
+            console.log(`Analytics Event: '${eventType}' sent (proxy: ${useProxyForTracks})`);
         } catch (error) {
             console.error(`Failed to log analytics event '${eventType}':`, error);
         }
@@ -71,12 +113,16 @@ document.addEventListener('DOMContentLoaded', () => {
         allTracks.sort(() => 0.5 - Math.random());
     }
 
-    // 2. Функции управления плеером (модифицированы для аналитики)
+    // === ОБНОВЛЕНО: Функции управления плеером с поддержкой прокси ===
     const originalLoadTrack = (index) => {
         if (index >= 0 && index < allTracks.length) {
             currentTrackIndex = index;
             const track = allTracks[index];
-            audio.src = track.file;
+            
+            // Применяем proxy URL если нужно
+            const trackUrl = getTrackUrlForPlayback(track);
+            
+            audio.src = trackUrl;
             currentTrackTitleEl.textContent = `${track.title} - ${track.artistName}`;
             audio.load();
         }
@@ -189,4 +235,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 7. Инициализация состояния кнопок
     updateAllButtons();
+
+    // === ДОБАВЛЕНО: Инициализация определения локации ===
+    initializeLocationDetection();
 });
