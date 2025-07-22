@@ -2,15 +2,7 @@
   "version": 2,
   "builds": [
     {
-      "src": "api/check-location.py",
-      "use": "@vercel/python"
-    },  
-    {
-      "src": "api/listen.py",
-      "use": "@vercel/python"
-    },
-    {
-      "src": "api/stats.py",
+      "src": "api/*.py",
       "use": "@vercel/python"
     },
     {
@@ -25,9 +17,19 @@
       "src": "style.css",
       "use": "@vercel/static"
     },
+      {
+      "src": "*.ico",
+      "use": "@vercel/static"
+    },
     {
       "src": "images/**",
       "use": "@vercel/static"
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/music/(.*)",
+      "destination": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/$1"
     }
   ]
 }
