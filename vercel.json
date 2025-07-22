@@ -78,6 +78,7 @@
           "key": "Access-Control-Allow-Headers", 
           "value": "Range, Content-Type, Authorization"
         },
+        
         {
           "key": "Access-Control-Expose-Headers",
           "value": "Content-Length, Content-Range, Accept-Ranges"
