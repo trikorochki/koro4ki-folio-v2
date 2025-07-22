@@ -15,21 +15,30 @@
     <!-- Скрипт редиректа для мобильных устройств -->
     <script>
     (function() {
-        // Проверка на все типы мобильных устройств
+        // Проверка на мобильные устройства
         var isMobile = /Mobi|Android|iPhone|iPad|iPod|BlackBerry|Windows Phone|Opera Mini|IEMobile|Mobile Safari/i.test(navigator.userAgent);
-        
-        // Дополнительная проверка через screen size для планшетов
         var isSmallScreen = window.screen && (window.screen.width <= 768 || window.screen.height <= 768);
-        
-        // Проверка touch events для более точного определения
         var isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
         
         if ((isMobile || (isSmallScreen && isTouchDevice)) && window.location.hostname === 'kr4.pro') {
-            console.log('📱 Mobile device detected, redirecting to kr4.vercel.app');
-            window.location.replace('https://kr4.vercel.app' + window.location.pathname + window.location.search);
+            // ДОБАВЛЕНО: Проверяем доступность kr4.pro через Cloudflare
+            console.log('📱 Mobile device detected on kr4.pro');
+            
+            // Тестовый период: показываем уведомление вместо автоматического редиректа
+            var shouldRedirect = localStorage.getItem('kr4_force_redirect') === 'true';
+            
+            if (shouldRedirect) {
+                console.log('🔄 Forcing redirect to kr4.vercel.app');
+                window.location.replace('https://kr4.vercel.app' + window.location.pathname + window.location.search);
+            } else {
+                console.log('⚠️ Cloudflare test mode: staying on kr4.pro');
+                // Добавляем индикатор что пользователь на kr4.pro через Cloudflare
+                document.body.setAttribute('data-cloudflare-test', 'true');
+            }
         }
     })();
     </script>
+
 </head>
 <body>
     <!-- ИЗМЕНЕНИЕ: Добавлена кнопка Play Random в шапку -->
