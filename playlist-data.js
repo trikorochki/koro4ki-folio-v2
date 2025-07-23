@@ -486,92 +486,92 @@ window.artistData = {
         "description_line2": "Musical chaos for the digital world.",
         "albums": [
             {
-                "name": "Gl...it.ch",
-                "cover": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/psykorochki/Album. Gl...it.ch/cover.jpg",
+                "name": "Infected glitch opera",
+                "cover": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/psykorochki/Album. Infected glitch opera/cover.jpg",
                 "tracks": [
                     {
                         "num": 1,
-                        "title": "Чистый синтез",
-                        "originalTitle": "1. Чистый синтез",
-                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/psykorochki/Album. Gl...it.ch/1. Чистый синтез.mp3",
-                        "duration": 186
+                        "title": "INIT REALIZING",
+                        "originalTitle": "1. INIT REALIZING",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/psykorochki/Album. Infected glitch opera/1. INIT REALIZING.mp3",
+                        "duration": 240
                     },
                     {
                         "num": 2,
-                        "title": "Психический рэп",
-                        "originalTitle": "2. Психический рэп",
-                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/psykorochki/Album. Gl...it.ch/2. Психический рэп.mp3",
-                        "duration": 156
+                        "title": "VIRAL.PROPAGATION",
+                        "originalTitle": "2. VIRAL.PROPAGATION",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/psykorochki/Album. Infected glitch opera/2. VIRAL.PROPAGATION.mp3",
+                        "duration": 258
                     },
                     {
                         "num": 3,
-                        "title": "Глитч-Мозг",
-                        "originalTitle": "3. Глитч-Мозг",
-                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/psykorochki/Album. Gl...it.ch/3. Глитч-Мозг.mp3",
-                        "duration": 124
+                        "title": "QUARANTINE PROTOCOL",
+                        "originalTitle": "3. QUARANTINE PROTOCOL",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/psykorochki/Album. Infected glitch opera/3. QUARANTINE PROTOCOL.mp3",
+                        "duration": 205
                     },
                     {
                         "num": 4,
-                        "title": "Имплант",
-                        "originalTitle": "4. Имплант",
-                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/psykorochki/Album. Gl...it.ch/4. Имплант.mp3",
-                        "duration": 172
+                        "title": "INNER.DEMONS LOADING",
+                        "originalTitle": "4. INNER.DEMONS LOADING",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/psykorochki/Album. Infected glitch opera/4. INNER.DEMONS LOADING.mp3",
+                        "duration": 296
                     },
                     {
                         "num": 5,
-                        "title": "Нейро-Сетка",
-                        "originalTitle": "5. Нейро-Сетка",
-                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/psykorochki/Album. Gl...it.ch/5. Нейро-Сетка.mp3",
-                        "duration": 154
+                        "title": "DIGITAL EXORCISM",
+                        "originalTitle": "5. DIGITAL EXORCISM",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/psykorochki/Album. Infected glitch opera/5. DIGITAL EXORCISM.mp3",
+                        "duration": 395
                     },
                     {
                         "num": 6,
-                        "title": "Тишина",
-                        "originalTitle": "6. Тишина",
-                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/psykorochki/Album. Gl...it.ch/6. Тишина.mp3",
-                        "duration": 140
+                        "title": "ALGORITHM.WAR",
+                        "originalTitle": "6. ALGORITHM.WAR",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/psykorochki/Album. Infected glitch opera/6. ALGORITHM.WAR.mp3",
+                        "duration": 480
                     },
                     {
                         "num": 7,
-                        "title": "Кварковый Суицид",
-                        "originalTitle": "7. Кварковый Суицид",
-                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/psykorochki/Album. Gl...it.ch/7. Кварковый Суицид.mp3",
-                        "duration": 166
+                        "title": "MEMORY.DEFRAG",
+                        "originalTitle": "7. MEMORY.DEFRAG",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/psykorochki/Album. Infected glitch opera/7. MEMORY.DEFRAG.mp3",
+                        "duration": 356
                     },
                     {
                         "num": 8,
-                        "title": "Jericho",
-                        "originalTitle": "8. Jericho",
-                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/psykorochki/Album. Gl...it.ch/8. Jericho.mp3",
-                        "duration": 133
+                        "title": "DEFRAGMENTATION",
+                        "originalTitle": "8. DEFRAGMENTATION",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/psykorochki/Album. Infected glitch opera/8. DEFRAGMENTATION.mp3",
+                        "duration": 192
                     },
                     {
                         "num": 9,
-                        "title": "Big RAM Bang",
-                        "originalTitle": "9. Big RAM Bang",
-                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/psykorochki/Album. Gl...it.ch/9. Big RAM Bang.mp3",
-                        "duration": 136
+                        "title": "SOURCE.CODE REWRITE",
+                        "originalTitle": "9. SOURCE.CODE REWRITE",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/psykorochki/Album. Infected glitch opera/9. SOURCE.CODE REWRITE.mp3",
+                        "duration": 272
                     },
                     {
                         "num": 10,
-                        "title": "Дверь в ничто",
-                        "originalTitle": "10. Дверь в ничто",
-                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/psykorochki/Album. Gl...it.ch/10. Дверь в ничто.mp3",
-                        "duration": 187
+                        "title": "PURIFICATION.PROTOCOL",
+                        "originalTitle": "10. PURIFICATION.PROTOCOL",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/psykorochki/Album. Infected glitch opera/10. PURIFICATION.PROTOCOL.mp3",
+                        "duration": 256
                     },
                     {
                         "num": 11,
-                        "title": "Троян",
-                        "originalTitle": "11. Троян",
-                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/psykorochki/Album. Gl...it.ch/11. Троян.mp3",
-                        "duration": 123
+                        "title": "CLEAN REBOOT",
+                        "originalTitle": "11. CLEAN REBOOT",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/psykorochki/Album. Infected glitch opera/11. CLEAN REBOOT.mp3",
+                        "duration": 291
                     },
                     {
                         "num": 12,
-                        "title": "Вернуться",
-                        "originalTitle": "12. Вернуться",
-                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/psykorochki/Album. Gl...it.ch/12. Вернуться.mp3",
-                        "duration": 150
+                        "title": "DIGITAL EXORCISM (remix)",
+                        "originalTitle": "12. DIGITAL EXORCISM (remix)",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/psykorochki/Album. Infected glitch opera/12. DIGITAL EXORCISM (remix).mp3",
+                        "duration": 377
                     }
                 ]
             },
@@ -669,6 +669,96 @@ window.artistData = {
                         "originalTitle": "12 Echoes of a World's Funeral",
                         "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/psykorochki/Album. The Glitch Gospel/12 Echoes of a World's Funeral.mp3",
                         "duration": 195
+                    }
+                ]
+            },
+            {
+                "name": "Gl...it.ch",
+                "cover": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/psykorochki/Album. Gl...it.ch/cover.jpg",
+                "tracks": [
+                    {
+                        "num": 1,
+                        "title": "Чистый синтез",
+                        "originalTitle": "1. Чистый синтез",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/psykorochki/Album. Gl...it.ch/1. Чистый синтез.mp3",
+                        "duration": 186
+                    },
+                    {
+                        "num": 2,
+                        "title": "Психический рэп",
+                        "originalTitle": "2. Психический рэп",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/psykorochki/Album. Gl...it.ch/2. Психический рэп.mp3",
+                        "duration": 156
+                    },
+                    {
+                        "num": 3,
+                        "title": "Глитч-Мозг",
+                        "originalTitle": "3. Глитч-Мозг",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/psykorochki/Album. Gl...it.ch/3. Глитч-Мозг.mp3",
+                        "duration": 124
+                    },
+                    {
+                        "num": 4,
+                        "title": "Имплант",
+                        "originalTitle": "4. Имплант",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/psykorochki/Album. Gl...it.ch/4. Имплант.mp3",
+                        "duration": 172
+                    },
+                    {
+                        "num": 5,
+                        "title": "Нейро-Сетка",
+                        "originalTitle": "5. Нейро-Сетка",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/psykorochki/Album. Gl...it.ch/5. Нейро-Сетка.mp3",
+                        "duration": 154
+                    },
+                    {
+                        "num": 6,
+                        "title": "Тишина",
+                        "originalTitle": "6. Тишина",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/psykorochki/Album. Gl...it.ch/6. Тишина.mp3",
+                        "duration": 140
+                    },
+                    {
+                        "num": 7,
+                        "title": "Кварковый Суицид",
+                        "originalTitle": "7. Кварковый Суицид",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/psykorochki/Album. Gl...it.ch/7. Кварковый Суицид.mp3",
+                        "duration": 166
+                    },
+                    {
+                        "num": 8,
+                        "title": "Jericho",
+                        "originalTitle": "8. Jericho",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/psykorochki/Album. Gl...it.ch/8. Jericho.mp3",
+                        "duration": 133
+                    },
+                    {
+                        "num": 9,
+                        "title": "Big RAM Bang",
+                        "originalTitle": "9. Big RAM Bang",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/psykorochki/Album. Gl...it.ch/9. Big RAM Bang.mp3",
+                        "duration": 136
+                    },
+                    {
+                        "num": 10,
+                        "title": "Дверь в ничто",
+                        "originalTitle": "10. Дверь в ничто",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/psykorochki/Album. Gl...it.ch/10. Дверь в ничто.mp3",
+                        "duration": 187
+                    },
+                    {
+                        "num": 11,
+                        "title": "Троян",
+                        "originalTitle": "11. Троян",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/psykorochki/Album. Gl...it.ch/11. Троян.mp3",
+                        "duration": 123
+                    },
+                    {
+                        "num": 12,
+                        "title": "Вернуться",
+                        "originalTitle": "12. Вернуться",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/music/psykorochki/Album. Gl...it.ch/12. Вернуться.mp3",
+                        "duration": 150
                     }
                 ]
             }
