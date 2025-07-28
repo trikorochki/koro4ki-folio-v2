@@ -16,10 +16,12 @@ ARTIST_INFO = {
     "trapkorochki": {"name": "TRAPKORO4KI", "image": "images/trapkorochki.jpg", "description_line1": "A fusion of noir trap and digital decadence.", "description_line2": "The architecture of the void for your veins."},
     "streetkorochki": {"name": "STREETKORO4KI", "image": "images/streetkorochki.jpg", "description_line1": "Satirical rap dismantling social pretenses.", "description_line2": "Fast-paced trap-drill with polyrhythmic chaos."},
     "nukorochki": {"name": "NÜKORO4KI", "image": "images/nukorochki.jpg", "description_line1": "Experimental metal with no fucking frames.", "description_line2": "From quantum leaps to night machines of sound."},
-    "jahkorochki": {"name": "JAHKORO4KI", "image": "images/jahkorochki.jpg", "description_line1": "Reggae-trap-industrial chaos with Balkan soul.", "description_line2": "From Sarajevo streets to global bureaucratic beats."}
+    "jahkorochki": {"name": "JAHKORO4KI", "image": "images/jahkorochki.jpg", "description_line1": "Reggae-trap-industrial chaos with Balkan soul.", "description_line2": "From Sarajevo streets to global bureaucratic beats."},
+    "boxkorochki": {"name": "BOXKORO4KI", "image": "images/boxkorochki.jpg", "description_line1": "Human beatbox in unconventional time signatures.", "description_line2": "Vocal percussion exploring 3/3, 5/4, 7/8 dimensions."}
+
 }
 
-MUSIC_DIR = 'music'
+MUSIC_DIR = 'loc-music'
 OUTPUT_FILE = 'playlist-data.js'
 # --- Конец конфигурации ---
 
