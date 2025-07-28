@@ -323,13 +323,27 @@ window.artistData = {
                 "tracks": [
                     {
                         "num": 1,
+                        "title": "Bretton Woods",
+                        "originalTitle": "Bretton Woods",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/loc-music/jahkorochki/Demo. Крест и вексель/Bretton Woods.mp3",
+                        "duration": 314
+                    },
+                    {
+                        "num": 2,
+                        "title": "Великий развод",
+                        "originalTitle": "Великий развод",
+                        "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/loc-music/jahkorochki/Demo. Крест и вексель/Великий развод.mp3",
+                        "duration": 349
+                    },
+                    {
+                        "num": 3,
                         "title": "Звезда смерти",
                         "originalTitle": "Звезда смерти",
                         "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/loc-music/jahkorochki/Demo. Крест и вексель/Звезда смерти.mp3",
                         "duration": 273
                     },
                     {
-                        "num": 2,
+                        "num": 4,
                         "title": "Однозначно",
                         "originalTitle": "Однозначно",
                         "file": "https://rpattpnro3om3v4l.public.blob.vercel-storage.com/loc-music/jahkorochki/Demo. Крест и вексель/Однозначно.mp3",
